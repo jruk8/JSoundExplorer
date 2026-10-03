@@ -61,5 +61,22 @@ services:
       timeout: 3s
       retries: 12
 
+  # HTTPS front door for the API (prod server only). Enable with
+  # COMPOSE_PROFILES=prod and TLS_DOMAIN=<domain> in .env, then it
+  # reuses the existing caddydata volume so certs survive recreates.
+  tls:
+    profiles: ["prod"]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${TLS_DOMAIN:-localhost} --to api:3001
+    volumes:
+      - caddydata:/data
+    depends_on:
+      - api
+
 volumes:
   dbdata:
+  caddydata:
