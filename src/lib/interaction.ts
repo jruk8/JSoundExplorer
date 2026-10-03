@@ -39,6 +39,11 @@ export function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
 
+/** Quartic ease-in for UI fade-outs: holds loud, then dives to silence. */
+export function easeInQuart(t: number): number {
+  return t * t * t * t
+}
+
 const VAULT_FALLBACK = '#1a1d24' // --bg #1e2129 darkened 13%.
 
 /**
@@ -78,7 +83,13 @@ export function darkenColor(color: string, factor: number): string {
 }
 
 // Vault intro tuning.
-export const VAULT_SOUNDS = ['random.fizz', 'random.fuse', 'random.glass', 'random.explode']
+export const VAULT_SOUNDS = [
+  'random.pop',
+  'random.glass',
+  'random.click',
+  'random.door_open',
+  'random.bow',
+]
 export const VAULT_PITCHES = [0.9, 1, 1.1]
 export const VAULT_OPEN_PX = 240
 export const VAULT_COMMIT_FRACTION = 0.5
@@ -110,6 +121,20 @@ export function pickVaultPitch(random: () => number = Math.random): number {
   return VAULT_PITCHES[Math.floor(random() * VAULT_PITCHES.length)]
 }
 
+/** Surprise/spotlight sequencing: ease-out scroll, then the auto-click delay. */
+export const SURPRISE_SCROLL_MS = 450
+export const SURPRISE_CLICK_DELAY_MS = 60
+
+/** UI sound: the preferred key when cataloged, else the vault fanfare pool. */
+export function pickUiSound(
+  pool: string[],
+  preferred: string,
+  random: () => number = Math.random,
+): string | null {
+  if (pool.includes(preferred)) return preferred
+  return pickVaultSound(pool, random)
+}
+
 export async function copyText(text: string): Promise<void> {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text)
@@ -131,6 +156,20 @@ export type SwipeDirection = 'left' | 'right'
 export const SWIPE_OVERLAY_MS = 450
 export const SWIPE_REVEAL_MS = 450
 export const SWIPE_COMMIT_PX = 100
+/** Discard sting, played strictly (no fallback when uncataloged). */
+export const SWIPE_DISCARD_SOUND = 'step.snow'
+/** Non-card swipe sounds play at half the configured volume. */
+export const SWIPE_UI_VOLUME_FACTOR = 0.5
+
+// Classical performance tuning: one lookahead tick fires due notes and
+// releases expired ones, so a piece needs no per-note timers at all.
+export const CLASSICAL_TICK_MS = 50
+/** Note-off release tail: a short fade instead of a hard cut. */
+export const CLASSICAL_RELEASE_MS = 100
+/** Safety tail: a stuck performance ends this far past the last note. */
+export const CLASSICAL_END_TAIL_MS = 8000
+/** Unmatched note-ons ring this long (also cut by stop/retrigger). */
+export const CLASSICAL_OPEN_NOTE_MS = 2000
 
 /** Ease-out-back for card bounce-back (slight overshoot past center). */
 export function easeOutBack(t: number): number {

@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import type { PlayOpts } from './usePlayback.ts'
 import type { SwipeDirection } from '../lib/interaction.ts'
-import { SURPRISE_PITCHES, SWIPE_OVERLAY_MS } from '../lib/interaction.ts'
+import {
+  SURPRISE_PITCHES,
+  SWIPE_DISCARD_SOUND,
+  SWIPE_OVERLAY_MS,
+  SWIPE_UI_VOLUME_FACTOR,
+  pickUiSound,
+  pickVaultPitch,
+  pickVaultSound,
+} from '../lib/interaction.ts'
 
 export interface SwipeCardData {
   key: string
@@ -9,12 +18,14 @@ export interface SwipeCardData {
 
 export interface SwipeGameOptions {
   keys: string[]
+  /** Unfiltered catalog keys: UI sounds never depend on list filters. */
+  soundPool: string[]
   volume: number
   pitch: number
   randomizePitch: boolean
   recordPlay: (key: string) => void
   playingKey: string | null
-  play: (key: string, opts?: { pitch?: number; volume?: number }) => void
+  play: (key: string, opts?: PlayOpts) => void
   stop: () => void
   spotlight: (key: string, pitch: number) => void
 }
@@ -49,6 +60,7 @@ export function shuffleRunoff(cards: SwipeCardData[], lastKey: string): SwipeCar
 /** Tinder-style swipe game: deck, rounds, runoff, winner spotlight. */
 export function useSwipeGame({
   keys,
+  soundPool,
   volume,
   pitch,
   randomizePitch,
@@ -92,6 +104,17 @@ export function useSwipeGame({
 
   function closeGame(winner: SwipeCardData | null) {
     setClosing(true)
+    if (winner !== null) {
+      const fanfare = pickUiSound(soundPool, 'block.copper_chest.copper_chest_open')
+      if (fanfare !== null) {
+        play(fanfare, {
+          pitch: 1.1,
+          volume: volume * SWIPE_UI_VOLUME_FACTOR,
+          internal: true,
+          fade: true,
+        })
+      }
+    }
     window.clearTimeout(closeTimerRef.current)
     closeTimerRef.current = window.setTimeout(() => {
       setActive(false)
@@ -131,6 +154,8 @@ export function useSwipeGame({
     setClosing(false)
     setOverlayReady(false)
     setActive(true)
+    // Sting up front, as the overlay starts darkening (not at card flip).
+    slap()
     overlayTimerRef.current = window.setTimeout(() => {
       setOverlayReady(true)
     }, SWIPE_OVERLAY_MS)
@@ -141,8 +166,31 @@ export function useSwipeGame({
     if (!card) return
     if (dir === 'right') {
       // Instant replay with a +15% power boost, stopping anything playing.
-      play(card.key, { pitch: card.pitch, volume: volume * 1.15 })
-    recordPlay(card.key)
+      play(card.key, { pitch: card.pitch, volume: volume * 1.15, fade: true })
+      recordPlay(card.key)
+      return
+    }
+    // Strictly step.snow: no fallback sting when it is uncataloged.
+    if (soundPool.includes(SWIPE_DISCARD_SOUND)) {
+      play(SWIPE_DISCARD_SOUND, {
+        pitch: pickVaultPitch(),
+        volume: volume * SWIPE_UI_VOLUME_FACTOR,
+        internal: true,
+        fade: true,
+      })
+    }
+  }
+
+  /** Round slap sting: the five random sounds, never logged. */
+  function slap() {
+    const sting = pickVaultSound(soundPool)
+    if (sting !== null) {
+      play(sting, {
+        pitch: pickVaultPitch(),
+        volume: volume * SWIPE_UI_VOLUME_FACTOR,
+        internal: true,
+        fade: true,
+      })
     }
   }
 
@@ -171,6 +219,7 @@ export function useSwipeGame({
       setPicks([])
       setIndex(0)
       setRoundNo((n) => n + 1)
+      slap()
     }
   }
 
@@ -200,6 +249,10 @@ export function useSwipeGame({
     overlayReady,
     current,
     cardKey: `${roundNo}:${index}`,
+    roundNo,
+    cardsLeft: deck.length - index,
+    discarded: index - picks.length,
+    pickedCount: picks.length,
     open,
     dismiss,
     commitThrow,

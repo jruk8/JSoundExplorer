@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import {
   darkenColor,
+  easeInQuart,
+  pickUiSound,
   pickVaultPitch,
   pickVaultSound,
   vaultSeparation,
   vaultShouldOpen,
 } from './interaction.ts'
+
+describe('easeInQuart', () => {
+  it('holds loud early, then dives to silence', () => {
+    expect(easeInQuart(0)).toBe(0)
+    expect(easeInQuart(1)).toBe(1)
+    expect(easeInQuart(0.5)).toBeCloseTo(0.0625, 5)
+  })
+})
 
 describe('darkenColor', () => {
   it('darkens the app background 13% for the vault', () => {
@@ -67,7 +77,7 @@ describe('vaultShouldOpen', () => {
 
 describe('pickVaultSound', () => {
   it('prefers the named fanfare sounds', () => {
-    expect(pickVaultSound(['ui.click', 'random.fuse', 'block.x'], () => 0)).toBe('random.fuse')
+    expect(pickVaultSound(['ui.click', 'random.pop', 'block.x'], () => 0)).toBe('random.pop')
   })
 
   it('falls back to any catalog key', () => {
@@ -82,5 +92,23 @@ describe('pickVaultSound', () => {
     expect(pickVaultPitch(() => 0)).toBe(0.9)
     expect(pickVaultPitch(() => 0.5)).toBe(1)
     expect(pickVaultPitch(() => 0.99)).toBe(1.1)
+  })
+})
+
+describe('pickUiSound', () => {
+  it('prefers the exact key when cataloged', () => {
+    expect(pickUiSound(['ui.click', 'item.spyglass.stop'], 'item.spyglass.stop', () => 0.99)).toBe(
+      'item.spyglass.stop',
+    )
+  })
+
+  it('falls back to the vault pool', () => {
+    expect(pickUiSound(['ui.click', 'random.bow'], 'item.spyglass.stop', () => 0)).toBe(
+      'random.bow',
+    )
+  })
+
+  it('returns null for an empty pool', () => {
+    expect(pickUiSound([], 'item.spyglass.stop')).toBeNull()
   })
 })

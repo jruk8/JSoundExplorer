@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import { cardTitle } from '../lib/catalog.ts'
 import { DOUBLE_CLICK_MS } from '../lib/interaction.ts'
 import type { PlayHistoryEntry } from '../lib/preferences.ts'
+import { en } from '../locales/en.ts'
 import { ScrollDownIcon, ScrollUpIcon } from './icons.tsx'
 
 export interface HistoryListProps {
@@ -139,7 +140,7 @@ export function HistoryList({ entries, onSelect, onInstant }: HistoryListProps) 
   return (
     <div data-testid="history-list" className="history-scroll">
       <ul ref={listRef} className="history-items" onScroll={syncThumb}>
-        {entries.length === 0 && <li className="history-empty">No history yet.</li>}
+        {entries.length === 0 && <li className="history-empty">{en.options.historyEmpty}</li>}
         {entries.map((entry, i) => {
           const mix = mixLabel(entry)
           return (
@@ -159,7 +160,7 @@ export function HistoryList({ entries, onSelect, onInstant }: HistoryListProps) 
       </ul>
       {thumb.visible && (
         <div className="history-bar">
-          <button {...arrowProps(-1, 'Scroll history up')}>
+          <button {...arrowProps(-1, en.options.historyUp)}>
             <ScrollUpIcon />
           </button>
           <div className="history-track" onPointerDown={onTrackPointerDown}>
@@ -172,7 +173,7 @@ export function HistoryList({ entries, onSelect, onInstant }: HistoryListProps) 
               onPointerCancel={onThumbPointerUp}
             />
           </div>
-          <button {...arrowProps(1, 'Scroll history down')}>
+          <button {...arrowProps(1, en.options.historyDown)}>
             <ScrollDownIcon />
           </button>
         </div>

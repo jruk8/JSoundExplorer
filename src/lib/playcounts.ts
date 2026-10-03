@@ -35,6 +35,24 @@ export function formatPlays(count: number): string {
   return `${Math.round(q)}${suffix}`
 }
 
+/** List sort: catalog order, or ranked by play counts (ties alphabetical). */
+export type SortMode = 'none' | 'most' | 'least'
+
+export function sortSoundKeys(
+  keys: string[],
+  counts: Record<string, number>,
+  mode: SortMode,
+): string[] {
+  if (mode === 'none') return keys
+  const ranked = [...keys]
+  ranked.sort((a, b) => {
+    const delta = (counts[a] ?? 0) - (counts[b] ?? 0)
+    if (delta !== 0) return mode === 'most' ? -delta : delta
+    return a < b ? -1 : a > b ? 1 : 0
+  })
+  return ranked
+}
+
 export async function fetchPlayCounts(): Promise<Record<string, number>> {
   const res = await fetch(`${API_BASE}/api/plays`)
   if (!res.ok) throw new Error(`plays fetch failed: ${res.status}`)
@@ -53,6 +71,81 @@ export async function fetchPlayCounts(): Promise<Record<string, number>> {
     }
   }
   return counts
+}
+
+export interface HourlyBucket {
+  hour: string
+  plays: number
+}
+
+export async function fetchHourlyPlays(): Promise<HourlyBucket[]> {
+  const res = await fetch(`${API_BASE}/api/plays/hourly`)
+  if (!res.ok) throw new Error(`hourly fetch failed: ${res.status}`)
+  const data: unknown = await res.json()
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('hourly payload shape')
+  }
+  const raw = (data as { hours?: unknown }).hours
+  if (!Array.isArray(raw)) throw new Error('hourly hours shape')
+  const hours: HourlyBucket[] = []
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue
+    const { hour, plays } = entry as { hour?: unknown; plays?: unknown }
+    if (typeof hour !== 'string') continue
+    if (typeof plays !== 'number' || !Number.isFinite(plays) || plays < 0) continue
+    hours.push({ hour, plays: Math.floor(plays) })
+  }
+  return hours
+}
+
+export interface DayBucket {
+  day: string
+  plays: number
+}
+
+export async function fetchDailyPlays(): Promise<DayBucket[]> {
+  const res = await fetch(`${API_BASE}/api/plays/daily`)
+  if (!res.ok) throw new Error(`daily fetch failed: ${res.status}`)
+  const data: unknown = await res.json()
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('daily payload shape')
+  }
+  const raw = (data as { days?: unknown }).days
+  if (!Array.isArray(raw)) throw new Error('daily days shape')
+  const days: DayBucket[] = []
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue
+    const { day, plays } = entry as { day?: unknown; plays?: unknown }
+    if (typeof day !== 'string') continue
+    if (typeof plays !== 'number' || !Number.isFinite(plays) || plays < 0) continue
+    days.push({ day, plays: Math.floor(plays) })
+  }
+  return days
+}
+
+export interface MonthBucket {
+  month: string
+  plays: number
+}
+
+export async function fetchMonthlyPlays(): Promise<MonthBucket[]> {
+  const res = await fetch(`${API_BASE}/api/plays/monthly`)
+  if (!res.ok) throw new Error(`monthly fetch failed: ${res.status}`)
+  const data: unknown = await res.json()
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('monthly payload shape')
+  }
+  const raw = (data as { months?: unknown }).months
+  if (!Array.isArray(raw)) throw new Error('monthly months shape')
+  const months: MonthBucket[] = []
+  for (const entry of raw) {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue
+    const { month, plays } = entry as { month?: unknown; plays?: unknown }
+    if (typeof month !== 'string') continue
+    if (typeof plays !== 'number' || !Number.isFinite(plays) || plays < 0) continue
+    months.push({ month, plays: Math.floor(plays) })
+  }
+  return months
 }
 
 export async function postPlayCounts(plays: Record<string, number>): Promise<void> {

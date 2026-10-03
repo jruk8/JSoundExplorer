@@ -1,4 +1,5 @@
 import { formatPlays } from '../lib/playcounts.ts'
+import { en } from '../locales/en.ts'
 
 export interface SoundListProps {
   loading: boolean
@@ -24,14 +25,14 @@ export function SoundList({
   if (loading) {
     return (
       <main className="list-wrap">
-        <p className="muted">Loading sounds…</p>
+        <p className="muted">{en.list.loading}</p>
       </main>
     )
   }
   if (keys.length === 0) {
     return (
       <main className="list-wrap">
-        <p className="muted">No sounds match.</p>
+        <p className="muted">{en.list.empty}</p>
       </main>
     )
   }
@@ -67,7 +68,7 @@ export function SoundList({
                     color: copiedBlue ? '#C05D4D' : '#6b7280',
                   }}
                 >
-                  copied to clipboard
+                  {en.list.copied}
                 </span>
               )}
               {(counts[key] ?? 0) > 0 && (

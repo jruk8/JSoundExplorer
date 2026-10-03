@@ -109,6 +109,21 @@ export function cardTitle(key: string): string {
     .join(' ')
 }
 
+/**
+ * Search match: every query word must appear in the raw key or its fancy
+ * card title, in any order, so "villager mob" still finds mob.villager.death
+ * and both "lava_chicken" and "Lava Chicken" find mob.lava_chicken.hurt.
+ */
+export function keyMatchesQuery(key: string, query: string): boolean {
+  const trimmed = query.trim().toLowerCase()
+  if (trimmed === '') return true
+  const hayKey = key.toLowerCase()
+  const hayTitle = cardTitle(key).toLowerCase()
+  return trimmed
+    .split(/\s+/)
+    .every((word) => hayKey.includes(word) || hayTitle.includes(word))
+}
+
 /** Compact base: strip a numeric sibling suffix (break4 -> break, hurt_2 -> hurt). */
 export function baseKey(key: string): string {
   const stripped = key.replace(/([A-Za-z_])[0-9]+$/, '$1')

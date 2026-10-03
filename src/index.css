@@ -33,7 +33,10 @@ body {
   padding: 0 16px 48px;
 }
 
-/* Left column: single scroll flow, surprise sits directly under the list. */
+/* Left column: single scroll flow, surprise sits directly under the list.
+   Column stack: center (z 0) below both sides, left (z 1) below right
+   (z 2), so inner content never bleeds over the edges at odd
+   screen/zoom levels. (Overlays sit far above at z 100/200.) */
 .sidebar {
   width: 216px;
   flex-shrink: 0;
@@ -42,6 +45,7 @@ body {
   max-height: 100vh;
   overflow-y: auto;
   padding: 20px 16px 20px 0;
+  z-index: 1;
 }
 
 .nav-toggle-all {
@@ -157,11 +161,48 @@ body {
   cursor: pointer;
 }
 
+.classical-btn {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: #55c04d;
+  border: 2px solid #8fd489;
+  border-radius: 0;
+  padding: 10px;
+  margin-top: 14px;
+  cursor: pointer;
+}
+
+.classical-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.classical-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.classical-btn.playing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.classical-stop-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .main {
   flex: 1;
   min-width: 0;
   padding-left: 24px;
   border-left: 1px solid var(--line);
+  z-index: 0;
 }
 
 .app-header {
@@ -207,12 +248,28 @@ body {
 }
 
 .controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 28px;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: start;
+  gap: 12px 28px;
   align-items: end;
   padding: 16px 0;
   border-bottom: 2px solid var(--line);
+}
+
+/* Row 1: filter + sort. Row 2: pitch + volume sliders, strictly. */
+.search-label {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sort-field {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.slider-label {
+  grid-row: 2;
 }
 
 .search-label,
@@ -239,6 +296,42 @@ body {
   border-color: var(--accent);
 }
 
+.sort-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.sort-select {
+  position: relative;
+}
+
+.sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  color: #fff;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 0;
+  padding: 8px 10px;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sort-toggle:focus {
+  border-color: var(--accent);
+}
+
+.sort-toggle .sort-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 /*
  * Blocky sliders. The visible track is inset by exactly half the 16px thumb
  * on each side, so thumb centers land on the edge lines with the thumb body
@@ -247,6 +340,9 @@ body {
 .slider-wrap {
   position: relative;
   display: inline-block;
+  /* Shrink to the input: the overlay track must span exactly the input
+     width, or the detents drift from the thumb path (stretched parents). */
+  width: max-content;
   line-height: 0;
 }
 
@@ -443,6 +539,7 @@ body {
   top: 0;
   padding: 20px 0 32px 16px;
   border-left: 1px solid var(--line);
+  z-index: 2;
 }
 
 .options-title {
@@ -581,6 +678,69 @@ body {
   font-size: 0.85rem;
   font-weight: 400;
   color: var(--muted);
+}
+
+.global-plays {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.global-plays-total {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.trend-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.trend-chart text {
+  font-family: 'Roboto Condensed', system-ui, sans-serif;
+  font-size: 9.5px;
+  fill: var(--muted);
+}
+
+.trend-grid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.trend-area {
+  fill: var(--accent);
+  opacity: 0.15;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.trend-dot {
+  fill: var(--accent);
+}
+
+.trend-hit {
+  fill: transparent;
+  cursor: default;
+}
+
+.trend-tip-box {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.trend-chart .trend-tip-text {
+  fill: #fff;
+  font-size: 12px;
 }
 
 .history-scroll {
@@ -851,6 +1011,67 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+}
+
+.swipe-hud {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+  animation: swipe-slap 0.25s ease-out;
+}
+
+@keyframes swipe-slap {
+  0% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.94);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-hud {
+    animation: none;
+  }
+}
+
+.swipe-round {
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.swipe-tally {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.swipe-left {
+  color: #fff;
+}
+
+.swipe-discarded {
+  color: #c04d4d;
+}
+
+.swipe-picked {
+  color: #51c04d;
+}
+
+.swipe-sep {
+  color: var(--muted);
 }
 
 .swipe-card {

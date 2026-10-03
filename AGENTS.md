@@ -6,7 +6,8 @@ source); reimplement from behavior descriptions only.
 
 ## Stack
 
-React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state lib.
+React 18 + TypeScript (strict) + Vite 6. Vitest (+ jsdom, Testing Library)
+for unit/hook tests; no router, no state lib.
 
 ## Commands
 
@@ -24,15 +25,19 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
   `playback` (remote ogg + WebAudio blips), `preferences` (localStorage),
   `scripting` (JMHScript format), `interaction` (slider geometry, snap, timing,
   clipboard, easing), `playcounts` (count formatting, counts API client),
-  `version` (git-tag display version).
+  `version` (git-tag display version), `midi` (SMF parse, bundled piece
+  URLs, note-rate map), `pitch` (sample base-pitch detection).
 - `src/hooks/` » behavior/state: `useCatalog`, `usePlayback` (single-playback),
   `useCopyLabel` (double-click tracking), `useNamespaces`, `useSurprise`,
-  `useSwipeGame`, `usePlayCounts`, `useJmh`, `useHistory` (persisted plays).
+  `useSwipeGame`, `usePlayCounts`, `useJmh`, `useHistory` (persisted plays),
+  `useClassical` (MIDI performance scheduler), `useTrendPlays`
+  (hourly/daily/monthly series).
 - `src/components/` » pure view: `Sidebar`, `Controls`, `SoundList`,
   `OptionsPanel`, `CommandSelect`, `HistoryList`, `SwipeGame`, `SwipeCard`,
-  `Vault`, `icons`. `App.tsx` only composes hooks + components.
+  `Vault`, `TrendChart` (hourly/daily/monthly), `icons`. `App.tsx` only
+  composes hooks + components.
 - `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
-- `server/` » counts API (node:http + mysql2) + its Dockerfile; `db`
+- `server/` » counts API + sample byte-proxy (node:http + mysql2) + its Dockerfile; `db`
   (MariaDB) alongside in compose; `docker-compose.tls.yml` adds a Caddy
   HTTPS front door for Pages mode.
 - `.github/workflows/` » `build.yml` (CI), `deploy.yml` (Pages),
@@ -48,6 +53,9 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
   `'./Sidebar.tsx'`.
 - Behavior hooks use `data-testid` selectors (e.g. `sound-<key>`); keep stable.
 - Timings live in `src/lib/interaction.ts` as named constants.
+- User-facing strings live in `src/locales/en.ts` (nested, Crowdin-shaped;
+  `{name}` placeholders via `formatString`); JMHScript protocol text and
+  count units stay in code.
 - localStorage key: `jsoundexplorer.namespaceToggles.v1` (namespace prefs
   only; JMHScript selection and surprise options are session-only by design).
 
@@ -75,6 +83,14 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
   the element ceiling).
 - Play counts: anonymous per-base totals in MariaDB; rows show compact
   counts (1.0K), hidden at zero; 5s batched upload, 10s refresh.
+- Play Classical!: a random bundled MIDI piece on the latest history
+  sound (sample base pitch auto-detected as the key anchor, middle C
+  fallback; velocity dynamics, sustain pedal honored, freely
+  overlapping notes with 100ms release fades); sliders retune live
+  notes; stops only on toggle/Escape/swipe — another pick or surprise
+  switches the sound for the rest instead; disabled with empty history
+  or offline.
+- Trend charts: hourly (8h), daily (7d), monthly (12m) polled series.
 
 ## Verification
 

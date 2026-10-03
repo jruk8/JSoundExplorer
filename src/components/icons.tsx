@@ -89,9 +89,9 @@ export function PlayIcon() {
   )
 }
 
-export function StopIcon() {
+export function StopIcon({ className = 'swipe-play-icon' }: { className?: string }) {
   return (
-    <svg className="swipe-play-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
+    <svg className={className} viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
       <rect x="4.5" y="4.5" width="7" height="7" fill="currentColor" />
     </svg>
   )
@@ -109,6 +109,22 @@ export function ScrollDownIcon() {
   return (
     <svg className="history-arrow-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
       <path d="M8 12 L2.5 4 L13.5 4 Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function SortIcon() {
+  return (
+    <svg
+      className="sort-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      aria-hidden="true"
+    >
+      <path d="M2.5 4h6M2.5 8h4M2.5 12h2" />
+      <path d="M12 2.5v9M9.5 9L12 11.5 14.5 9" />
     </svg>
   )
 }

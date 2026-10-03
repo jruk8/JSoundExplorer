@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { SURPRISE_PITCHES, easeOutCubic } from '../lib/interaction.ts'
+import {
+  SURPRISE_CLICK_DELAY_MS,
+  SURPRISE_PITCHES,
+  SURPRISE_SCROLL_MS,
+  easeOutCubic,
+} from '../lib/interaction.ts'
 
 export interface SurpriseOptions {
   keys: string[]
   setPitch: (pitch: number) => void
   onPick: (key: string, pitch: number | null) => void
+  fadeOutCurrent: (durationMs: number) => void
 }
 
 /** Surprise-me sequencing: ease-out scroll, delayed auto-click, no repeats. */
-export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
+export function useSurprise({ keys, setPitch, onPick, fadeOutCurrent }: SurpriseOptions) {
   const [surprisePitch, setSurprisePitch] = useState(false)
   const runRef = useRef(0)
   const rafRef = useRef<number | undefined>(undefined)
@@ -16,8 +22,8 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
   const lastPickRef = useRef<string | null>(null)
   const expectedYRef = useRef(0)
   const scrollGuardRef = useRef<(() => void) | null>(null)
-  const latestRef = useRef({ keys, surprisePitch, setPitch, onPick })
-  latestRef.current = { keys, surprisePitch, setPitch, onPick }
+  const latestRef = useRef({ keys, surprisePitch, setPitch, onPick, fadeOutCurrent })
+  latestRef.current = { keys, surprisePitch, setPitch, onPick, fadeOutCurrent }
 
   function disarmScrollGuard() {
     if (scrollGuardRef.current !== null) {
@@ -92,7 +98,7 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
       }
       const startY = window.scrollY
       const delta = clamped - startY
-      const duration = 450
+      const duration = SURPRISE_SCROLL_MS
       let start: number | null = null
       const frame = (now: number) => {
         if (start === null) start = now
@@ -114,6 +120,9 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
   function runToKey(choice: string, pitchToSet: number | null) {
     // Cancel any in-flight run.
     cancelRun()
+    // A UI sting lands silent exactly on the auto-click; instant picks
+    // supersede this with a micro crossfade instead.
+    latestRef.current.fadeOutCurrent(SURPRISE_SCROLL_MS + SURPRISE_CLICK_DELAY_MS)
     const run = ++runRef.current
     // Apply pitch up front so state has settled before the auto-click.
     if (pitchToSet !== null) {
@@ -132,7 +141,7 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
         if (runRef.current !== run) return
         disarmScrollGuard()
         latestRef.current.onPick(choice, pitchToSet)
-      }, 60)
+      }, SURPRISE_CLICK_DELAY_MS)
     })
   }
 

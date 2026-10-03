@@ -3,9 +3,12 @@ import type { PlayHistoryEntry } from './preferences.ts'
 import {
   HISTORY_LIMIT,
   HISTORY_STORAGE_KEY,
+  SORT_MODE_KEY,
   insertHistoryEntry,
   loadPlayHistory,
+  loadSortMode,
   savePlayHistory,
+  saveSortMode,
 } from './preferences.ts'
 
 const entry = (key: string, pitch = 1, volume = 100): PlayHistoryEntry => ({ key, pitch, volume })
@@ -78,5 +81,33 @@ describe('play history storage', () => {
       ]),
     )
     expect(loadPlayHistory()).toEqual([entry('a', 1.2, 50)])
+  })
+})
+
+describe('sort mode storage', () => {
+  const store = new Map<string, string>()
+
+  beforeEach(() => {
+    store.clear()
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (store.has(k) ? (store.get(k) as string) : null),
+      setItem: (k: string, v: string) => store.set(k, String(v)),
+      removeItem: (k: string) => store.delete(k),
+    })
+  })
+
+  it('defaults to most played', () => {
+    expect(loadSortMode()).toBe('most')
+  })
+
+  it('round-trips the mode', () => {
+    saveSortMode('least')
+    expect(store.get(SORT_MODE_KEY)).toBe('least')
+    expect(loadSortMode()).toBe('least')
+  })
+
+  it('falls back to most played on unknown values', () => {
+    store.set(SORT_MODE_KEY, 'bogus')
+    expect(loadSortMode()).toBe('most')
   })
 })

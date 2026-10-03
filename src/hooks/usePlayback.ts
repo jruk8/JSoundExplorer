@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SoundCatalog } from '../lib/catalog.ts'
 import { buildResourceUrl, pickVariant } from '../lib/catalog.ts'
+import { easeInQuart } from '../lib/interaction.ts'
 import { mockBlipDurationMs, playMockBlip, playRemoteUrl } from '../lib/playback.ts'
 import type { PlayHistoryEntry } from '../lib/preferences.ts'
 
@@ -9,6 +10,17 @@ export interface PlayOpts {
   volume?: number
   /** Internal sounds (vault fanfare): played but never logged to history. */
   internal?: boolean
+  /** Fade-marked UI sounds: never cut abruptly (scheduled/micro fades). */
+  fade?: boolean
+}
+
+/** Unpredictable interruptions crossfade under the new sound this long. */
+export const MICRO_FADE_MS = 90
+const FADE_STEP_MS = 16
+
+interface ActiveFade {
+  el: HTMLAudioElement
+  timers: number[]
 }
 
 export interface PlaybackOptions {
@@ -31,6 +43,9 @@ export function usePlayback({
 }: PlaybackOptions) {
   const [playingKey, setPlayingKeyState] = useState<string | null>(null)
   const playingRef = useRef<string | null>(null)
+  const internalRef = useRef(false)
+  const fadeMarkRef = useRef(false)
+  const fadeStateRef = useRef<ActiveFade | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mockStopRef = useRef<(() => void) | null>(null)
   const mockTimerRef = useRef<number | undefined>(undefined)
@@ -38,6 +53,10 @@ export function usePlayback({
 
   function setPlaying(key: string | null) {
     playingRef.current = key
+    if (key === null) {
+      internalRef.current = false
+      fadeMarkRef.current = false
+    }
     setPlayingKeyState(key)
   }
 
@@ -45,7 +64,101 @@ export function usePlayback({
     return playingRef.current !== null
   }
 
+  /** True while an internal UI sound plays (exempt from list filtering). */
+  function isInternalPlaying(): boolean {
+    return internalRef.current
+  }
+
+  /** Cancel the pending fade, optionally only when it targets el. */
+  function cancelFade(el?: HTMLAudioElement) {
+    const active = fadeStateRef.current
+    if (!active || (el !== undefined && active.el !== el)) return
+    fadeStateRef.current = null
+    for (const t of active.timers) window.clearTimeout(t)
+  }
+
+  /**
+   * Ease-in-quart ramp of el from fromVolume to silence over durationMs,
+   * landing exactly (the completion timeout, not the last step, finishes).
+   * A superseded detached fade target is paused: nearly silent already.
+   */
+  function scheduleFade(
+    el: HTMLAudioElement,
+    fromVolume: number,
+    durationMs: number,
+    onDone: () => void,
+  ) {
+    const prev = fadeStateRef.current
+    cancelFade()
+    if (prev && prev.el !== audioRef.current && prev.el !== el) {
+      try {
+        prev.el.pause()
+      } catch {
+        // Already stopped.
+      }
+    }
+    if (durationMs <= 0 || fromVolume <= 0) {
+      onDone()
+      return
+    }
+    const timers: number[] = []
+    fadeStateRef.current = { el, timers }
+    for (let at = FADE_STEP_MS; at < durationMs; at += FADE_STEP_MS) {
+      const t = at
+      timers.push(
+        window.setTimeout(() => {
+          if (fadeStateRef.current?.el !== el) return
+          try {
+            el.volume = fromVolume * (1 - easeInQuart(t / durationMs))
+          } catch {
+            // Element already gone; the completion still lands.
+          }
+        }, t),
+      )
+    }
+    timers.push(
+      window.setTimeout(() => {
+        if (fadeStateRef.current?.el !== el) return
+        fadeStateRef.current = null
+        onDone()
+      }, durationMs),
+    )
+  }
+
+  /**
+   * Fade the current fade-marked UI sound to silence over durationMs.
+   * Callers schedule this when the interrupting sound is known in advance
+   * (card flip, spotlight scroll) so the sting lands silent exactly on it.
+   * Anything else playing (card sounds, silence) is left untouched.
+   */
+  function fadeOutCurrent(durationMs: number) {
+    const el = audioRef.current
+    if (!el || !fadeMarkRef.current || playingRef.current === null) return
+    scheduleFade(el, el.volume, durationMs, () => {
+      try {
+        el.volume = 0
+      } catch {
+        // Already stopped.
+      }
+      try {
+        el.pause()
+      } catch {
+        // Already stopped.
+      }
+      if (audioRef.current === el) setPlaying(null)
+    })
+  }
+
   function stopCurrent() {
+    const fading = fadeStateRef.current
+    cancelFade()
+    if (fading && fading.el !== audioRef.current) {
+      try {
+        fading.el.pause()
+      } catch {
+        // Already stopped.
+      }
+    }
     const audio = audioRef.current
     if (audio) {
       audio.onended = null
@@ -107,9 +220,34 @@ export function usePlayback({
   function play(key: string, opts?: PlayOpts) {
     const p = opts?.pitch ?? pitch
     const v = opts?.volume ?? volume
+    const outgoing = audioRef.current
+    const outgoingFade = fadeMarkRef.current && outgoing !== null
+    internalRef.current = opts?.internal === true
+    fadeMarkRef.current = opts?.fade === true
     const member = resolveMember(key)
-    // Strictly one sound at a time: stop whatever is playing first.
-    stopCurrent()
+    if (outgoingFade && outgoing) {
+      // Unpredictable interruption of a UI sting: detach it and crossfade
+      // under the new sound instead of cutting (card sounds cut as before).
+      const old = outgoing
+      audioRef.current = null
+      old.onended = null
+      old.onerror = null
+      scheduleFade(old, old.volume, MICRO_FADE_MS, () => {
+        try {
+          old.volume = 0
+        } catch {
+          // Already stopped.
+        }
+        try {
+          old.pause()
+        } catch {
+          // Already stopped.
+        }
+      })
+    } else {
+      // Strictly one sound at a time: stop whatever is playing first.
+      stopCurrent()
+    }
     if (offline) {
       setPlaying(key)
       if (!opts?.internal) onPlay({ key, pitch: p, volume: v })
@@ -155,9 +293,11 @@ export function usePlayback({
     setPlaying(key)
     if (!opts?.internal) onPlay({ key, pitch: p, volume: v })
     audio.onended = () => {
+      cancelFade(audio)
       if (playingRef.current === key) setPlaying(null)
     }
     audio.onerror = () => {
+      cancelFade(audio)
       if (playingRef.current === key) setPlaying(null)
     }
   }
@@ -167,5 +307,5 @@ export function usePlayback({
     setPlaying(null)
   }
 
-  return { playingKey, play, stop, isPlaying }
+  return { playingKey, play, stop, isPlaying, isInternalPlaying, fadeOutCurrent }
 }

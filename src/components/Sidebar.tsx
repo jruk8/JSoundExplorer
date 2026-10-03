@@ -1,4 +1,5 @@
-import { NamespaceIcon, ToggleAllIcon } from './icons.tsx'
+import { en } from '../locales/en.ts'
+import { NamespaceIcon, StopIcon, ToggleAllIcon } from './icons.tsx'
 
 export interface SidebarProps {
   namespaces: string[]
@@ -13,6 +14,9 @@ export interface SidebarProps {
   onSurprisePitchChange: (checked: boolean) => void
   swipeDisabled: boolean
   onSwipe: () => void
+  classicalDisabled: boolean
+  classicalPlaying: boolean
+  onClassical: () => void
 }
 
 export function Sidebar({
@@ -28,10 +32,13 @@ export function Sidebar({
   onSurprisePitchChange,
   swipeDisabled,
   onSwipe,
+  classicalDisabled,
+  classicalPlaying,
+  onClassical,
 }: SidebarProps) {
   return (
     <div className="sidebar">
-      <nav className="navbar" aria-label="Sound namespaces">
+      <nav className="navbar" aria-label={en.sidebar.navLabel}>
         <button
           type="button"
           data-testid="toggle-all"
@@ -40,7 +47,7 @@ export function Sidebar({
           onClick={onToggleAll}
         >
           <ToggleAllIcon />
-          {allOn ? 'Turn all off' : 'Turn all on'}
+          {allOn ? en.sidebar.turnAllOff : en.sidebar.turnAllOn}
         </button>
         <hr className="nav-separator" />
         <ul data-testid="namespace-list" className="nav-list">
@@ -72,7 +79,7 @@ export function Sidebar({
           disabled={surpriseDisabled}
           onClick={onSurprise}
         >
-          Surprise me!
+          {en.sidebar.surprise}
         </button>
         <button
           type="button"
@@ -81,7 +88,7 @@ export function Sidebar({
           disabled={swipeDisabled}
           onClick={onSwipe}
         >
-          Swipe!
+          {en.sidebar.swipe}
         </button>
         <label className="surprise-pitch-label">
           <input
@@ -91,8 +98,18 @@ export function Sidebar({
             checked={surprisePitch}
             onChange={(e) => onSurprisePitchChange(e.target.checked)}
           />
-          also pitch
+          {en.sidebar.alsoPitch}
         </label>
+        <button
+          type="button"
+          data-testid="classical"
+          className={classicalPlaying ? 'classical-btn playing' : 'classical-btn'}
+          disabled={classicalDisabled}
+          onClick={onClassical}
+          aria-label={classicalPlaying ? en.sidebar.classicalStop : en.sidebar.classical}
+        >
+          {classicalPlaying ? <StopIcon className="classical-stop-icon" /> : en.sidebar.classical}
+        </button>
       </div>
     </div>
   )

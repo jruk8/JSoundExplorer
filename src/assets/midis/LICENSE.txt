@@ -1,0 +1,10 @@
+Media license
+=============
+
+The .mid/.midi files in this directory are original recordings
+provided by jruk8 (the original repo owner) for use with
+JSoundExplorer.
+
+Unlike the code in this repository (see root level LICENSE),
+these media files are all rights reserved and are NOT covered by
+the AGPL or any other open license.

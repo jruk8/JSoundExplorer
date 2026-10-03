@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { compactKeys, namespaceOf, pickMember } from './lib/catalog.ts'
-import { DOUBLE_CLICK_MS } from './lib/interaction.ts'
+import { useEffect, useMemo, useState } from 'react'
+import { compactKeys, keyMatchesQuery, namespaceOf, pickMember } from './lib/catalog.ts'
+import { SWIPE_REVEAL_MS } from './lib/interaction.ts'
+import { en, formatString } from './locales/en.ts'
+import type { SortMode } from './lib/playcounts.ts'
+import { sortSoundKeys } from './lib/playcounts.ts'
 import type { PlayHistoryEntry } from './lib/preferences.ts'
+import { loadSortMode, saveSortMode } from './lib/preferences.ts'
 import { Vault } from './components/Vault.tsx'
 import { useCatalog } from './hooks/useCatalog.ts'
+import { useClassical } from './hooks/useClassical.ts'
 import { useCopyLabel } from './hooks/useCopyLabel.ts'
 import { useHistory } from './hooks/useHistory.ts'
 import { useJmh } from './hooks/useJmh.ts'
@@ -12,6 +17,7 @@ import { usePlayback } from './hooks/usePlayback.ts'
 import { usePlayCounts } from './hooks/usePlayCounts.ts'
 import { useSurprise } from './hooks/useSurprise.ts'
 import { useSwipeGame } from './hooks/useSwipeGame.ts'
+import { useDailyPlays, useHourlyPlays, useMonthlyPlays } from './hooks/useTrendPlays.ts'
 import { Controls } from './components/Controls.tsx'
 import { OptionsPanel } from './components/OptionsPanel.tsx'
 import { Sidebar } from './components/Sidebar.tsx'
@@ -23,31 +29,21 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [pitch, setPitch] = useState(1)
   const [volume, setVolume] = useState(100)
+  const [sortMode, setSortMode] = useState<SortMode>(loadSortMode)
+
+  useEffect(() => {
+    saveSortMode(sortMode)
+  }, [sortMode])
   const [vault, setVault] = useState(true)
   const [lastAutoKey, setLastAutoKey] = useState<string | null>(null)
   const memberGroups = useMemo(
     () => (catalog ? compactKeys(Object.keys(catalog)) : new Map<string, string[]>()),
     [catalog],
   )
-  const memberCacheRef = useRef<{ base: string; member: string; time: number } | null>(null)
-
-  // Resolve a compact row to one real member. The pick sticks for a
-  // double-click window so a copy matches the sound just heard.
+  // Resolve a compact row to one real member (fresh random pick per play).
+  // Copies always take the displayed base key, never a numbered sibling.
   function resolveMember(base: string): string {
-    const members = memberGroups.get(base) ?? [base]
-    const now = Date.now()
-    const cached = memberCacheRef.current
-    if (
-      cached !== null &&
-      cached.base === base &&
-      now - cached.time < DOUBLE_CLICK_MS &&
-      members.includes(cached.member)
-    ) {
-      return cached.member
-    }
-    const member = pickMember(members)
-    memberCacheRef.current = { base, member, time: now }
-    return member
+    return pickMember(memberGroups.get(base) ?? [base])
   }
   const history = useHistory()
   const playback = usePlayback({
@@ -62,6 +58,10 @@ export default function App() {
   const ns = useNamespaces(catalog)
   const jmh = useJmh(history.entries[0]?.key ?? null, pitch, volume)
   const playCounts = usePlayCounts()
+  const hourly = useHourlyPlays()
+  const daily = useDailyPlays()
+  const monthly = useMonthlyPlays()
+  const globalPlays = Object.values(playCounts.counts).reduce((sum, n) => sum + n, 0)
 
   // The copied label lasts at most as long as the playing sound.
   useEffect(() => {
@@ -73,24 +73,37 @@ export default function App() {
 
   const allKeys = useMemo(() => [...memberGroups.keys()].sort(), [memberGroups])
   const keys = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return allKeys.filter(
-      (k) => (!q || k.toLowerCase().includes(q)) && ns.isEnabled(namespaceOf(k)),
+    const filtered = allKeys.filter(
+      (k) => keyMatchesQuery(k, search) && ns.isEnabled(namespaceOf(k)),
     )
-  }, [allKeys, search, ns.prefs])
+    return sortSoundKeys(filtered, playCounts.counts, sortMode)
+  }, [allKeys, search, ns.prefs, playCounts.counts, sortMode])
 
-  // A row removed from the list stops its sound if playing.
+  // A row removed from the list stops its sound if playing. Internal
+  // UI sounds are exempt: no category gates them.
   useEffect(() => {
-    if (playback.playingKey !== null && !keys.includes(playback.playingKey)) {
+    if (
+      playback.playingKey !== null &&
+      !playback.isInternalPlaying() &&
+      !keys.includes(playback.playingKey)
+    ) {
       playback.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys, playback.playingKey])
 
+  const classical = useClassical({
+    soundKey: history.entries[0]?.key ?? null,
+    pitch,
+    volume,
+    catalog,
+    resolveMember,
+    stopPlayback: playback.stop,
+  })
+
   function handleSoundClick(key: string, auto = false, pitchOverride: number | null = null) {
     if (auto) setLastAutoKey(key)
-    const member = resolveMember(key)
-    if (copyLabel.resolveClick(key, Date.now(), member) === 'play') {
+    if (copyLabel.resolveClick(key, Date.now()) === 'play') {
       if (!auto && key !== lastAutoKey) {
         setLastAutoKey(null)
       }
@@ -125,9 +138,15 @@ export default function App() {
     }
   }
 
-  const surprise = useSurprise({ keys, setPitch, onPick: (key, pitch) => handleSoundClick(key, true, pitch) })
+  const surprise = useSurprise({
+    keys,
+    setPitch,
+    onPick: (key, pitch) => handleSoundClick(key, true, pitch),
+    fadeOutCurrent: playback.fadeOutCurrent,
+  })
   const game = useSwipeGame({
     keys,
+    soundPool: allKeys,
     volume,
     pitch,
     randomizePitch: surprise.surprisePitch,
@@ -153,32 +172,38 @@ export default function App() {
         surprisePitch={surprise.surprisePitch}
         onSurprisePitchChange={surprise.setSurprisePitch}
         swipeDisabled={keys.length === 0}
-        onSwipe={game.open}
+        onSwipe={() => {
+          classical.stop()
+          game.open()
+        }}
+        classicalDisabled={loading || offline || history.entries[0] == null}
+        classicalPlaying={classical.playing}
+        onClassical={classical.toggle}
       />
 
       <div className="main">
         <header className="app-header">
           <h1 className="app-title">
-            JSoundExplorer{' '}
+            {en.app.title}{' '}
             <span data-testid="app-version" className="app-version">
               {__APP_VERSION__}
             </span>
           </h1>
           <p data-testid="app-tagline" className="app-tagline">
             {version !== null
-              ? `MC${version} Sound Explorer`
+              ? formatString(en.app.tagline, { version })
               : offline
-                ? 'Offline Sound Explorer'
+                ? en.app.taglineOffline
                 : loading
-                  ? 'Loading Sound Explorer'
-                  : 'Online Sound Explorer'}
+                  ? en.app.taglineLoading
+                  : en.app.taglineOnline}
           </p>
-          <nav className="app-links" aria-label="Project links">
+          <nav className="app-links" aria-label={en.app.linksLabel}>
             <a href="https://github.com/jruk8/JSoundExplorer" target="_blank" rel="noreferrer">
-              » GitHub
+              {en.app.githubLink}
             </a>
             <a href="https://jruk8.github.io/JManhunt/" target="_blank" rel="noreferrer">
-              » JManhunt
+              {en.app.jmanhuntLink}
             </a>
           </nav>
         </header>
@@ -190,6 +215,8 @@ export default function App() {
           onPitchChange={setPitch}
           volume={volume}
           onVolumeChange={setVolume}
+          sortMode={sortMode}
+          onSortChange={setSortMode}
         />
 
         <SoundList
@@ -213,6 +240,10 @@ export default function App() {
         entries={history.entries}
         onHistorySelect={handleHistorySelect}
         onHistoryInstant={handleHistoryInstant}
+        hourly={hourly}
+        daily={daily}
+        monthly={monthly}
+        globalPlays={globalPlays}
       />
       {vault && (
         <Vault keys={allKeys} version={version} play={playback.play} onDone={() => setVault(false)} />
@@ -224,6 +255,11 @@ export default function App() {
           soundKey={game.current?.key ?? null}
           cardKey={game.cardKey}
           playing={game.current !== null && playback.playingKey === game.current.key}
+          roundNo={game.roundNo}
+          left={game.cardsLeft}
+          discarded={game.discarded}
+          picked={game.pickedCount}
+          onFlipStart={() => playback.fadeOutCurrent(SWIPE_REVEAL_MS / 2)}
           onRevealPlay={game.revealPlay}
           onCommit={game.commitThrow}
           onExit={game.exitThrow}
@@ -233,10 +269,9 @@ export default function App() {
       )}
     </div>
     <footer data-testid="privacy-footer" className="privacy-footer">
-      Privacy: play counts are anonymous per-sound totals. No accounts, no cookies, no
-      tracking identifiers. Preferences stay in your browser; sounds stream from Mojang's
-      CDN; server logs may note IPs like any web server. Questions: see{' '}
-      <a href="https://github.com/jruk8/JSoundExplorer">jruk8/JSoundExplorer on GitHub</a>.
+      {en.footer.text}
+      <a href="https://github.com/jruk8/JSoundExplorer">{en.footer.link}</a>
+      {en.footer.suffix}
     </footer>
     </>
   )

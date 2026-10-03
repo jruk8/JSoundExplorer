@@ -9,6 +9,7 @@ import {
   vaultShouldOpen,
 } from '../lib/interaction.ts'
 import type { PlayOpts } from '../hooks/usePlayback.ts'
+import { en, formatString } from '../locales/en.ts'
 
 export interface VaultProps {
   keys: string[]
@@ -197,13 +198,15 @@ export function Vault({ keys, version, play, onDone }: VaultProps) {
       onPointerCancel={() => endDrag(true)}
     >
       <div ref={topRef} className="vault-half vault-top" style={{ background: color }}>
-        <h1 className="vault-title">JSoundExplorer</h1>
+        <h1 className="vault-title">{en.vault.title}</h1>
         <VaultSeam className="vault-seam" />
       </div>
       <div ref={bottomRef} className="vault-half vault-bottom" style={{ background: color }}>
         <VaultSeam className="vault-seam vault-seam-bottom" />
         <p className="vault-subtitle">
-          {version === null ? 'Minecraft sounds' : `Minecraft sounds for ${version}`}
+          {version === null
+            ? en.vault.subtitleUnknown
+            : formatString(en.vault.subtitle, { version })}
         </p>
       </div>
     </div>

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { SwipeDirection } from '../lib/interaction.ts'
 import { SWIPE_COMMIT_PX, SWIPE_REVEAL_MS, easeOutBack } from '../lib/interaction.ts'
+import { en } from '../locales/en.ts'
 import { PlayIcon, StopIcon } from './icons.tsx'
 
 export interface SwipeCardProps {
   title: string
   playing: boolean
+  onFlipStart: () => void
   onRevealPlay: () => void
   onCommit: (dir: SwipeDirection) => void
   onExit: (dir: SwipeDirection) => void
@@ -48,6 +50,7 @@ function sampleVelocity(samples: DragSample[]): { vx: number; vy: number } {
 export function SwipeCard({
   title,
   playing,
+  onFlipStart,
   onRevealPlay,
   onCommit,
   onExit,
@@ -56,14 +59,16 @@ export function SwipeCard({
   const [ready, setReady] = useState(false)
   const cardRef = useRef<HTMLDivElement | null>(null)
   const textRef = useRef<HTMLDivElement | null>(null)
-  const latestRef = useRef({ onRevealPlay, onCommit, onExit, onTogglePlay })
-  latestRef.current = { onRevealPlay, onCommit, onExit, onTogglePlay }
+  const latestRef = useRef({ onFlipStart, onRevealPlay, onCommit, onExit, onTogglePlay })
+  latestRef.current = { onFlipStart, onRevealPlay, onCommit, onExit, onTogglePlay }
   const dragRef = useRef<DragState | null>(null)
   const busyRef = useRef(false)
   const rafRef = useRef<number | undefined>(undefined)
 
   // Reveal: autoplay at the flip midpoint, settle to the static face at end.
   useEffect(() => {
+    // Flip start first: any UI sting fades to land silent on the autoplay.
+    latestRef.current.onFlipStart()
     const midTimer = window.setTimeout(() => {
       latestRef.current.onRevealPlay()
     }, SWIPE_REVEAL_MS / 2)
@@ -225,7 +230,7 @@ export function SwipeCard({
         <div className="swipe-play-row">
           <button
             type="button"
-            aria-label={playing ? 'Stop sound' : 'Play sound'}
+            aria-label={playing ? en.swipe.stop : en.swipe.play}
             data-testid="swipe-play"
             className={playing ? 'swipe-play playing' : 'swipe-play'}
             onPointerDown={(e) => e.stopPropagation()}

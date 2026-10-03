@@ -15,6 +15,16 @@ import {
   VOLUME_STEP,
   snapValue,
 } from '../lib/interaction.ts'
+import type { SortMode } from '../lib/playcounts.ts'
+import { en, formatString } from '../locales/en.ts'
+import { Dropdown } from './Dropdown.tsx'
+import { SortIcon } from './icons.tsx'
+
+const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
+  { value: 'none', label: en.sort.none },
+  { value: 'most', label: en.sort.most },
+  { value: 'least', label: en.sort.least },
+]
 
 function DetentLines({ count, testId }: { count: number; testId: string }) {
   return (
@@ -95,6 +105,8 @@ export interface ControlsProps {
   onPitchChange: (value: number) => void
   volume: number
   onVolumeChange: (value: number) => void
+  sortMode: SortMode
+  onSortChange: (mode: SortMode) => void
 }
 
 export function Controls({
@@ -104,25 +116,46 @@ export function Controls({
   onPitchChange,
   volume,
   onVolumeChange,
+  sortMode,
+  onSortChange,
 }: ControlsProps) {
   return (
     <div className="controls">
       <label className="search-label">
-        <span>Search</span>
+        <span>{en.controls.searchCaption}</span>
         <input
           type="search"
-          aria-label="Search sounds"
+          aria-label={en.controls.searchLabel}
           data-testid="search"
-          placeholder="Filter sounds…"
+          placeholder={en.controls.searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="search-input"
         />
       </label>
 
+      <div className="sort-field">
+        <span>{en.controls.sortCaption}</span>
+        <Dropdown
+          value={sortMode}
+          options={SORT_OPTIONS}
+          onChange={onSortChange}
+          testId="sort"
+          ariaLabel={en.controls.sortLabel}
+          selectClassName="sort-select"
+          toggleClassName="sort-toggle"
+          optionTestId={(m) => `sort-option-${m}`}
+          renderToggle={(label) => (
+            <>
+              <SortIcon /> {label}
+            </>
+          )}
+        />
+      </div>
+
       <DetentSlider
-        label="Pitch"
-        display={`${pitch.toFixed(1)}x`}
+        label={en.controls.pitchCaption}
+        display={formatString(en.controls.pitchValue, { value: pitch.toFixed(1) })}
         value={pitch}
         min={PITCH_MIN}
         max={PITCH_MAX}
@@ -137,8 +170,8 @@ export function Controls({
       />
 
       <DetentSlider
-        label="Volume"
-        display={`${volume}%`}
+        label={en.controls.volumeCaption}
+        display={formatString(en.controls.volumeValue, { value: volume })}
         value={volume}
         min={VOLUME_MIN}
         max={VOLUME_MAX}
