@@ -106,27 +106,14 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
     })
   }
 
-  function surprise() {
-    const {
-      keys: currentKeys,
-      surprisePitch: withPitch,
-      setPitch: applyPitch,
-    } = latestRef.current
-    if (currentKeys.length === 0) return
-    // Cancel any in-flight surprise run.
+  function runToKey(choice: string, pitchToSet: number | null) {
+    // Cancel any in-flight run.
     cancelRun()
     const run = ++runRef.current
-    // Randomize pitch up front so state has settled before the auto-click.
-    if (withPitch) {
-      applyPitch(SURPRISE_PITCHES[Math.floor(Math.random() * SURPRISE_PITCHES.length)])
+    // Apply pitch up front so state has settled before the auto-click.
+    if (pitchToSet !== null) {
+      latestRef.current.setPitch(pitchToSet)
     }
-    // Never pick the same sound twice in a row, unless it is the only one.
-    const pool =
-      currentKeys.length > 1 && lastPickRef.current !== null
-        ? currentKeys.filter((k) => k !== lastPickRef.current)
-        : currentKeys
-    const choice = pool[Math.floor(Math.random() * pool.length)]
-    lastPickRef.current = choice
     armScrollGuard()
     void scrollToKeyCentered(choice).then((scrolled) => {
       if (runRef.current !== run) return
@@ -144,5 +131,25 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
     })
   }
 
-  return { surprise, surprisePitch, setSurprisePitch }
+  function surprise() {
+    const { keys: currentKeys, surprisePitch: withPitch } = latestRef.current
+    if (currentKeys.length === 0) return
+    // Never pick the same sound twice in a row, unless it is the only one.
+    const pool =
+      currentKeys.length > 1 && lastPickRef.current !== null
+        ? currentKeys.filter((k) => k !== lastPickRef.current)
+        : currentKeys
+    const choice = pool[Math.floor(Math.random() * pool.length)]
+    lastPickRef.current = choice
+    runToKey(
+      choice,
+      withPitch ? SURPRISE_PITCHES[Math.floor(Math.random() * SURPRISE_PITCHES.length)] : null,
+    )
+  }
+
+  function spotlight(key: string, pitch: number) {
+    runToKey(key, pitch)
+  }
+
+  return { surprise, spotlight, surprisePitch, setSurprisePitch }
 }

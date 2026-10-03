@@ -80,3 +80,19 @@ export function CheckIcon() {
     </svg>
   )
 }
+
+export function PlayIcon() {
+  return (
+    <svg className="swipe-play-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
+      <path d="M5 3.5 L12 8 L5 12.5 Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function StopIcon() {
+  return (
+    <svg className="swipe-play-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
+      <rect x="4.5" y="4.5" width="7" height="7" fill="currentColor" />
+    </svg>
+  )
+}

@@ -91,3 +91,9 @@ export function mockWaveformForKey(key: string): MockWaveform {
   const suffix = key.split('.').pop() ?? ''
   return WAVEFORM_BY_SUFFIX[suffix] ?? 'sine'
 }
+
+/** Bare sound id: key without namespaces or subnamespaces. */
+export function shortId(key: string): string {
+  const parts = key.split('.')
+  return parts[parts.length - 1] ?? key
+}

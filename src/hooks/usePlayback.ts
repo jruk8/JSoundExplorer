@@ -3,6 +3,11 @@ import type { SoundCatalog } from '../lib/catalog.ts'
 import { buildResourceUrl, pickVariant } from '../lib/catalog.ts'
 import { mockBlipDurationMs, playMockBlip, playRemoteUrl } from '../lib/playback.ts'
 
+export interface PlayOpts {
+  pitch?: number
+  volume?: number
+}
+
 export interface PlaybackOptions {
   catalog: SoundCatalog | null
   offline: boolean
@@ -58,7 +63,9 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function play(key: string) {
+  function play(key: string, opts?: PlayOpts) {
+    const p = opts?.pitch ?? pitch
+    const v = opts?.volume ?? volume
     // Strictly one sound at a time: stop whatever is playing first.
     stopCurrent()
     if (offline) {
@@ -67,7 +74,7 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
       window.clearTimeout(mockTimerRef.current)
       mockTimerRef.current = window.setTimeout(() => {
         if (playingRef.current === key) setPlaying(null)
-      }, mockBlipDurationMs(key, pitch))
+      }, mockBlipDurationMs(key, p))
       const AC =
         window.AudioContext ??
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -82,7 +89,7 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
       const ctx = audioCtxRef.current
       if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
       try {
-        mockStopRef.current = playMockBlip(ctx, key, pitch, volume)
+        mockStopRef.current = playMockBlip(ctx, key, p, v)
       } catch {
         mockStopRef.current = null
       }
@@ -94,7 +101,7 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
       return
     }
     const variant = pickVariant(variants)
-    const audio = playRemoteUrl(buildResourceUrl(variant.hash), pitch, volume, () => {
+    const audio = playRemoteUrl(buildResourceUrl(variant.hash), p, v, () => {
       if (playingRef.current === key) setPlaying(null)
     })
     audioRef.current = audio
@@ -111,5 +118,10 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
     }
   }
 
-  return { playingKey, play, isPlaying }
+  function stop() {
+    stopCurrent()
+    setPlaying(null)
+  }
+
+  return { playingKey, play, stop, isPlaying }
 }

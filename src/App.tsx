@@ -6,10 +6,12 @@ import { useJmh } from './hooks/useJmh.ts'
 import { useNamespaces } from './hooks/useNamespaces.ts'
 import { usePlayback } from './hooks/usePlayback.ts'
 import { useSurprise } from './hooks/useSurprise.ts'
+import { useSwipeGame } from './hooks/useSwipeGame.ts'
 import { Controls } from './components/Controls.tsx'
 import { ExtrasPanel } from './components/ExtrasPanel.tsx'
 import { Sidebar } from './components/Sidebar.tsx'
 import { SoundList } from './components/SoundList.tsx'
+import { SwipeGame } from './components/SwipeGame.tsx'
 
 export default function App() {
   const { catalog, version, offline, loading } = useCatalog()
@@ -46,6 +48,14 @@ export default function App() {
   }
 
   const surprise = useSurprise({ keys, setPitch, onPick: handleSoundClick })
+  const game = useSwipeGame({
+    keys,
+    volume,
+    playingKey: playback.playingKey,
+    play: playback.play,
+    stop: playback.stop,
+    spotlight: surprise.spotlight,
+  })
 
   return (
     <div className="app">
@@ -60,6 +70,8 @@ export default function App() {
         onSurprise={surprise.surprise}
         surprisePitch={surprise.surprisePitch}
         onSurprisePitchChange={surprise.setSurprisePitch}
+        swipeDisabled={keys.length === 0}
+        onSwipe={game.open}
       />
 
       <div className="main">
@@ -90,6 +102,19 @@ export default function App() {
       </div>
 
       <ExtrasPanel jmhText={jmh.jmhText} jmhCopied={jmh.jmhCopied} onCopy={jmh.copyJmh} />
+      {game.active && (
+        <SwipeGame
+          closing={game.closing}
+          overlayReady={game.overlayReady}
+          soundKey={game.current?.key ?? null}
+          cardKey={game.cardKey}
+          playing={game.current !== null && playback.playingKey === game.current.key}
+          onRevealPlay={game.revealPlay}
+          onCommit={game.commitThrow}
+          onExit={game.exitThrow}
+          onTogglePlay={game.togglePlay}
+        />
+      )}
     </div>
   )
 }

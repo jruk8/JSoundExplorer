@@ -26,9 +26,9 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
   clipboard, easing).
 - `src/hooks/` » behavior/state: `useCatalog`, `usePlayback` (single-playback),
   `useCopyLabel` (double-click tracking), `useNamespaces`, `useSurprise`,
-  `useJmh`.
+  `useSwipeGame`, `useJmh`.
 - `src/components/` » pure view: `Sidebar`, `Controls`, `SoundList`,
-  `ExtrasPanel`, `icons`. `App.tsx` only composes hooks + components.
+  `ExtrasPanel`, `SwipeGame`, `SwipeCard`, `icons`. `App.tsx` only composes hooks + components.
 - `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
 - `.github/workflows/` » `build.yml` (CI), `deploy.yml` (Pages),
   `release.yml` (tag-driven GitHub Releases); `.github/dependabot.yml`.
@@ -57,6 +57,8 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 - Volume slider is 0–100%; the JMHScript snippet writes gain 0.0–1.0.
 - Surprise: ease-out scroll to a random row, short beat, auto-click; any
   user scroll during the run cancels it; never repeats the last pick.
+- Swipe!: six-card Tinder game (flip reveal + autoplay, drag to throw
+  left/right with spin, runoff rounds, winner spotlights).
 
 ## Verification
 

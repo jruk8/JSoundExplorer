@@ -11,6 +11,8 @@ export interface SidebarProps {
   onSurprise: () => void
   surprisePitch: boolean
   onSurprisePitchChange: (checked: boolean) => void
+  swipeDisabled: boolean
+  onSwipe: () => void
 }
 
 export function Sidebar({
@@ -24,6 +26,8 @@ export function Sidebar({
   onSurprise,
   surprisePitch,
   onSurprisePitchChange,
+  swipeDisabled,
+  onSwipe,
 }: SidebarProps) {
   return (
     <div className="sidebar">
@@ -69,6 +73,15 @@ export function Sidebar({
           onClick={onSurprise}
         >
           Surprise me!
+        </button>
+        <button
+          type="button"
+          data-testid="swipe"
+          className="swipe-btn"
+          disabled={swipeDisabled}
+          onClick={onSwipe}
+        >
+          Swipe!
         </button>
         <label className="surprise-pitch-label">
           <input

@@ -492,8 +492,200 @@ body {
   }
 }
 
+/* Swipe game overlay + card. */
+.swipe-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.swipe-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  opacity: 0;
+  animation: swipe-dim-in 0.45s ease-out forwards;
+}
+
+.swipe-root.closing .swipe-dim {
+  animation: swipe-dim-out 0.45s ease-out forwards;
+}
+
+@keyframes swipe-dim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes swipe-dim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.swipe-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.swipe-card {
+  pointer-events: auto;
+  width: min(340px, 86vw);
+  height: min(460px, 70vh);
+  background: var(--panel);
+  border: 2px solid var(--track-border);
+  border-radius: 0;
+  touch-action: none;
+  user-select: none;
+  position: relative;
+  perspective: 900px;
+  will-change: transform;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+.swipe-card.entering {
+  animation: swipe-card-in 0.45s ease-out forwards;
+}
+
+@keyframes swipe-card-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.swipe-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: swipe-flip-in 0.45s ease-out forwards;
+}
+
+@keyframes swipe-flip-in {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+.swipe-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-front {
+  font-size: 4rem;
+  color: var(--muted);
+}
+
+.swipe-back {
+  transform: rotateY(180deg);
+}
+
+.swipe-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.swipe-id {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  font-family: 'Roboto Condensed', system-ui, -apple-system, sans-serif;
+  font-size: 2rem;
+  line-height: 1.15;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.swipe-play-row {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 28px;
+}
+
+.swipe-play {
+  background: #51c04d;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 16px 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.swipe-play.playing {
+  background: #c04d4d;
+}
+
+.swipe-play-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.swipe-btn {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: #4d66c0;
+  border: 2px solid #8fa0e0;
+  border-radius: 0;
+  padding: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.swipe-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.swipe-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+
+  .swipe-dim,
+  .swipe-card.entering,
+  .swipe-flip {
+    animation-duration: 0.01ms;
   }
 }
