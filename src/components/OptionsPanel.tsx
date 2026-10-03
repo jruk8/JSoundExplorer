@@ -69,11 +69,11 @@ export function OptionsPanel({
       <h3 className="history-title">{en.options.historyTitle}</h3>
       <HistoryList entries={entries} onSelect={onHistorySelect} onInstant={onHistoryInstant} />
       <hr className="nav-separator" />
-      <h3 className="history-title">{en.options.hourlyTitle}</h3>
       <p data-testid="global-plays" className="global-plays">
         {en.options.globalPlaysLabel}{' '}
         <span className="global-plays-total">{formatPlays(globalPlays)}</span>
       </p>
+      <h3 className="history-title">{en.options.hourlyTitle}</h3>
       <HourlyChart points={hourly} />
       <hr className="nav-separator" />
       <h3 className="history-title">{en.options.dailyTitle}</h3>

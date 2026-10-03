@@ -18,6 +18,7 @@ export const en = {
     linksLabel: 'Project links',
     githubLink: '» GitHub',
     jmanhuntLink: '» JManhunt',
+    authorLink: '» jruk',
   },
   footer: {
     text: 'Privacy: play counts are anonymous per-sound totals. No accounts, no cookies, no tracking identifiers. Preferences stay in your browser; sounds stream from Mojang\'s CDN; server logs may note IPs like any web server. Questions: see ',

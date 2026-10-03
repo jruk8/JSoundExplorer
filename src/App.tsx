@@ -205,6 +205,9 @@ export default function App() {
             <a href="https://jruk8.github.io/JManhunt/" target="_blank" rel="noreferrer">
               {en.app.jmanhuntLink}
             </a>
+            <a href="https://github.com/jruk8" target="_blank" rel="noreferrer">
+              {en.app.authorLink}
+            </a>
           </nav>
         </header>
 
