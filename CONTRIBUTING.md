@@ -1,0 +1,51 @@
+# Contributing to JSoundExplorer
+
+## Setup
+
+- Prereqs: Node 22+ (or Docker with the compose setup).
+- `npm install`
+- `npm run dev`, then open http://localhost:5173 in a browser.
+- The first install generates `package-lock.json`; commit it » Dependabot's
+  npm updates need it.
+
+## Build & run
+
+- `npm run build` » typecheck (`tsc`) + production build into `dist/`.
+- `npm run build:pages` » same with a relative base, for GitHub Pages.
+- `npm run build:catalog` » regenerate `public/sounds.json` from Mojang.
+- Production container: `docker compose up -d --build`, then open
+  http://localhost:8080 in a browser.
+- Dev container (hot reload, source bind-mounted):
+  `docker compose --profile dev up -d --build dev`, then open
+  http://localhost:5173 in a browser.
+- Stop everything: `docker compose --profile dev down`.
+- CI (`build.yml`, on push/PR): install, compose validation, best-effort
+  catalog fetch, build, dist artifact upload.
+
+## Conventions
+
+- TypeScript strict: no unused locals/params; explicit `.ts`/`.tsx` import
+  extensions (`from '../lib/catalog.ts'`).
+- Conventional Commits (`feat:`, `fix:`, `docs:`, …) » the changelog and
+  release notes are generated from them, so keep the type prefix accurate.
+- Clean-room only: never copy code, assets, or text from the old
+  SoundExplorer fork.
+
+## Releasing (tag-driven, Axion-style)
+
+- The version comes from git tags, not from files: tag `x.y.z`
+  (a leading `v`, e.g. `v1.2.3`, is tolerated and stripped).
+- To cut a release: push `main`, then `git tag 1.2.3 && git push origin 1.2.3`.
+- `release.yml` validates the tag, builds, attaches `dist.zip`, and publishes
+  a GitHub Release with git-cliff notes. Anything not shaped `x.y.z` fails fast.
+- Pages deploys (`deploy.yml`) run on every `main` push, independent of tags.
+
+## Changelog (git-cliff)
+
+- Config lives in `cliff.toml` (Conventional Commits groups).
+- Install git-cliff (cargo, package manager, or release binary), then:
+  - preview unreleased changes: `git cliff --unreleased`
+  - regenerate the file: `git cliff -o CHANGELOG.md`
+  - notes for the latest tag: `git cliff --latest`
+- Dependabot opens update PRs weekly (npm, Docker, GitHub Actions) with
+  `chore(deps):` commits, which the changelog groups under Dependencies.

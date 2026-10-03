@@ -1,4 +1,4 @@
-# AGENTS.md — JSoundExplorer
+# AGENTS.md » JSoundExplorer
 
 Clean-room rebuild of a Minecraft sound explorer. **Do not copy code, assets,
 or text from the old SoundExplorer repo** (forked from an all-rights-reserved
@@ -10,26 +10,30 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 
 ## Commands
 
-- `npm run dev` — Vite dev server with HMR (`:5173` in compose)
-- `npm run build` — `tsc && vite build` (the verification gate; keep it green)
-- `npm run build:pages` — build with relative base for GitHub Pages
-- `npm run build:catalog` — regenerate `public/sounds.json` from Mojang
-- `docker compose up -d --build` — prod (nginx, `:8080`)
-- `docker compose --profile dev up -d --build dev` — dev with hot reload
+- `npm run dev` » Vite dev server with HMR (`:5173` in compose)
+- `npm run build` » `tsc && vite build` (the verification gate; keep it green)
+- `npm run build:pages` » build with relative base for GitHub Pages
+- `npm run build:catalog` » regenerate `public/sounds.json` from Mojang
+- `docker compose up -d --build` » prod (nginx, `:8080`)
+- `docker compose --profile dev up -d --build dev` » dev with hot reload
+- Contributor workflows (dev, release, changelog): see CONTRIBUTING.md.
 
 ## Layout
 
-- `src/lib/` — framework-free business logic: `catalog` (types/parse/mock/URLs),
+- `src/lib/` » framework-free business logic: `catalog` (types/parse/mock/URLs),
   `playback` (remote ogg + WebAudio blips), `preferences` (localStorage),
   `scripting` (JMHScript format), `interaction` (slider geometry, snap, timing,
   clipboard, easing).
-- `src/hooks/` — behavior/state: `useCatalog`, `usePlayback` (single-playback),
+- `src/hooks/` » behavior/state: `useCatalog`, `usePlayback` (single-playback),
   `useCopyLabel` (double-click tracking), `useNamespaces`, `useSurprise`,
   `useJmh`.
-- `src/components/` — pure view: `Sidebar`, `Controls`, `SoundList`,
+- `src/components/` » pure view: `Sidebar`, `Controls`, `SoundList`,
   `ExtrasPanel`, `icons`. `App.tsx` only composes hooks + components.
-- `scripts/build-catalog.mjs` — Mojang version manifest → asset index → sounds.json.
-- `.github/workflows/` — `build.yml` (CI) and `deploy.yml` (GitHub Pages).
+- `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
+- `.github/workflows/` » `build.yml` (CI), `deploy.yml` (Pages),
+  `release.yml` (tag-driven GitHub Releases); `.github/dependabot.yml`.
+- `cliff.toml` » git-cliff changelog config (Conventional Commits).
+- `CONTRIBUTING.md` » contributor workflows.
 
 ## Conventions
 
@@ -42,7 +46,7 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 - localStorage key: `jsoundexplorer.namespaceToggles.v1` (namespace prefs
   only; JMHScript selection and surprise options are session-only by design).
 
-## Behaviors (contract — preserve unless asked)
+## Behaviors (contract » preserve unless asked)
 
 - Click plays a random variant; 2nd click <500ms copies instead (no replay).
 - Copied label: accent 0.4s → gray; hides on timeout (1.1s, no-sound fallback),
