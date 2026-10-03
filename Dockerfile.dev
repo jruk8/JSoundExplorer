@@ -1,0 +1,11 @@
+# Dev image: Vite dev server with hot reload.
+# Run: docker compose --profile dev up -d --build dev  ->  http://localhost:5173
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json ./
+RUN npm install --no-audit --no-fund
+COPY . .
+EXPOSE 5173
+# Best effort: fetch the real catalog so dev serves real data;
+# the app falls back to offline mock data when unreachable.
+CMD ["sh", "-c", "npm run build:catalog || echo 'catalog unavailable; using offline mocks'; npm run dev"]

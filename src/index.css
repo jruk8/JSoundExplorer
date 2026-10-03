@@ -1,15 +1,499 @@
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  color-scheme: dark;
+  font-family: 'Roboto Condensed', system-ui, -apple-system, sans-serif;
+  --bg: #1e2129;
+  --panel: #171a20;
+  --line: #343945;
+  --line-soft: #2a2e37;
+  --track: #343945;
+  --track-border: #4a5162;
+  --accent: #c05d4d;
+  --accent-light: #e8a798;
+  --text: #e5e5e5;
+  --muted: #a1a1aa;
+  --marker: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  display: grid;
-  place-items: center;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
 }
 
-main {
-  text-align: center;
+.app {
+  display: flex;
+  align-items: flex-start;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+/* Left column: single scroll flow, surprise sits directly under the list. */
+.sidebar {
+  width: 216px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 20px 16px 20px 0;
+}
+
+.nav-toggle-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--track-border);
+  border-radius: 0;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.nav-toggle-all:hover {
+  border-color: var(--accent);
+}
+
+.nav-separator {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 12px 0;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.nav-item label:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-checkbox {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.nav-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-count {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.surprise-btn {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: 2px solid var(--accent-light);
+  border-radius: 0;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.surprise-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.surprise-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.surprise-pitch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 20px 0 12px;
+  border-bottom: 2px solid var(--line);
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
+}
+
+.app-status {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  align-items: end;
+  padding: 16px 0;
+  border-bottom: 2px solid var(--line);
+}
+
+.search-label,
+.slider-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.search-input {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  width: 260px;
+  background: var(--panel);
+  color: var(--text);
+  border: 2px solid var(--line);
+  border-radius: 0;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+/*
+ * Blocky sliders. The visible track is inset by exactly half the 16px thumb
+ * on each side, so thumb centers land on the edge lines with the thumb body
+ * extending half outwards; detent lines sit at the real snap points.
+ */
+.slider-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.slider-track {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 18px;
+  background: var(--track);
+  outline: 2px solid var(--track-border);
+  border-radius: 0;
+}
+
+.detent-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* 1.0 detent marker: taller than the track so it extends slightly above
+   and below, thicker and brighter than the 1px detent lines. */
+.snap-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 30px;
+  background: var(--marker);
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  z-index: 1;
+  width: 220px;
+  height: 18px;
+  margin: 4px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: content-box;
+  width: 12px;
+  height: 26px;
+  background: var(--accent);
+  border: 2px solid var(--accent-light);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  box-sizing: content-box;
+  width: 12px;
+  height: 22px;
+  background: var(--accent);
+  border: 2px solid var(--accent-light);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.slider::-moz-range-track {
+  height: 18px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.list-wrap {
+  padding-top: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.sound-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9rem;
+}
+
+.sound-row-wrap {
+  margin: 0;
+  padding: 0;
+}
+
+.sound-row {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 7px 8px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.sound-row:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sound-row:hover .sound-key {
+  color: #fff;
+}
+
+.sound-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sound-key {
+  white-space: nowrap;
+}
+
+.sound-row.playing .sound-key {
+  color: var(--accent);
+}
+
+.copied-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font: inherit;
+  pointer-events: none;
+}
+
+.copied-blue {
+  color: var(--accent);
+}
+
+.copied-gray {
+  color: #6b7280;
+}
+
+/* Right sidebar: Extras panel with the JMHScript snippet box. */
+.extras {
+  width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  padding: 20px 0 32px 16px;
+  border-left: 1px solid var(--line);
+}
+
+.extras-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.jmhscript-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.jmhscript-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.jmhscript-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--panel);
+  color: var(--accent);
+  border: 2px solid var(--track-border);
+  border-radius: 0;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.jmhscript-copy:hover {
+  border-color: var(--accent);
+}
+
+.jmhscript-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.jmhscript-box {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: #fff;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 0;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.jmhscript-box:focus {
+  border-color: var(--accent);
+}
+
+.jmhscript-box.copied {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: auto;
+    position: static;
+    max-height: none;
+    padding-right: 0;
+  }
+
+  .main {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--line);
+    width: 100%;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .extras {
+    width: 100%;
+    position: static;
+    border-left: none;
+    border-top: 1px solid var(--line);
+    padding: 16px 0 0;
+    margin-top: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

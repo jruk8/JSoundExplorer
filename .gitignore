@@ -6,6 +6,12 @@ dist
 dist-ssr
 *.local
 
+# generated sound catalog (npm run build:catalog)
+public/sounds.json
+
+# local env (never commit secrets)
+.env
+
 # editor
 .vscode/*
 !.vscode/extensions.json
