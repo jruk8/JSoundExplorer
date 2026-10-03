@@ -31,7 +31,8 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
   `ExtrasPanel`, `SwipeGame`, `SwipeCard`, `icons`. `App.tsx` only composes hooks + components.
 - `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
 - `server/` » counts API (node:http + mysql2) + its Dockerfile; `db`
-  (MariaDB) alongside in compose.
+  (MariaDB) alongside in compose; `docker-compose.tls.yml` adds a Caddy
+  HTTPS front door for Pages mode.
 - `.github/workflows/` » `build.yml` (CI), `deploy.yml` (Pages),
   `release.yml` (tag-driven GitHub Releases); `.github/dependabot.yml`.
 - `cliff.toml` » git-cliff changelog config (Conventional Commits).

@@ -37,6 +37,8 @@ jobs:
         run: npm run build:catalog || echo "catalog fetch failed; app falls back to offline mocks"
 
       - name: Build for Pages (relative base)
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
         run: npm run build:pages
 
       - name: Upload Pages artifact

@@ -37,6 +37,17 @@
   add `--database=$DB_NAME` if you renamed it).
 - Bare `npm run dev` (no compose) simply shows no counts » the app degrades
   gracefully when `/api` is unreachable.
+- GitHub Pages is static-only, so it cannot run MariaDB: host `db`+`api`
+  on your own server (plain `docker compose up` there), expose the API over
+  public HTTPS, set `CORS_ORIGIN` to the Pages origin, and set the repo
+  variable `VITE_API_BASE` to the API origin » `deploy.yml` bakes it in.
+  Browsers block HTTP APIs from HTTPS pages, so HTTPS is required.
+- On a bare host: `git clone https://github.com/jruk8/JSoundExplorer.git`,
+  `cp .env.example .env`, set secrets + `CORS_ORIGIN`. You only need the
+  backend: `docker compose up -d db api` (skips the frontend services).
+- Public HTTPS via Caddy: point a DNS name at the host, then
+  `API_ORIGIN=api.example.com docker compose -f docker-compose.yml
+  -f docker-compose.tls.yml up -d db api tls`.
 
 ## Conventions
 

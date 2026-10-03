@@ -70,6 +70,20 @@ export function usePlayback({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Live pitch: moving the slider mid-play retunes the current sound.
+  // preservesPitch stays false on the element, so the rate shifts pitch.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (audio) {
+      try {
+        audio.playbackRate = pitch
+      } catch {
+        // Element already gone; nothing to retune.
+      }
+    }
+    // Mock blips are 180ms; no human can drag a slider inside one.
+  }, [pitch])
+
   // Escape cancels any playing sound immediately.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

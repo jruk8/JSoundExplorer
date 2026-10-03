@@ -5,6 +5,9 @@ export const FLUSH_MS = 5000
 /** Refresh displayed totals every 10s while the tab is visible. */
 export const REFRESH_MS = 10000
 
+// Absolute API origin for static hosting (GitHub Pages); empty = same-origin.
+const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+
 /** Compact count: 999, 1.0K, 11K, 101K, 1.1M, 1.0B, failsafe to T. */
 export function formatPlays(count: number): string {
   const n = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0
@@ -33,7 +36,7 @@ export function formatPlays(count: number): string {
 }
 
 export async function fetchPlayCounts(): Promise<Record<string, number>> {
-  const res = await fetch('/api/plays')
+  const res = await fetch(`${API_BASE}/api/plays`)
   if (!res.ok) throw new Error(`plays fetch failed: ${res.status}`)
   const data: unknown = await res.json()
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
@@ -53,7 +56,7 @@ export async function fetchPlayCounts(): Promise<Record<string, number>> {
 }
 
 export async function postPlayCounts(plays: Record<string, number>): Promise<void> {
-  const res = await fetch('/api/plays', {
+  const res = await fetch(`${API_BASE}/api/plays`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ plays }),
@@ -67,7 +70,7 @@ export function beaconPlayCounts(plays: Record<string, number>): boolean {
       return false
     }
     const blob = new Blob([JSON.stringify({ plays })], { type: 'application/json' })
-    return navigator.sendBeacon('/api/plays', blob)
+    return navigator.sendBeacon(`${API_BASE}/api/plays`, blob)
   } catch {
     return false
   }

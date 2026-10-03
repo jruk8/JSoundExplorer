@@ -14,6 +14,7 @@ const DB_CONFIG = {
 const MAX_BODY_BYTES = 1024 * 1024
 const MAX_BATCH_IDS = 1000
 const MAX_PLAYS_PER_ID = 1000000
+const CORS_ORIGIN = process.env.CORS_ORIGIN ?? ''
 
 function json(res, status, value) {
   const body = JSON.stringify(value)
@@ -72,6 +73,20 @@ await pool.query(`
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (CORS_ORIGIN) {
+      res.setHeader('access-control-allow-origin', CORS_ORIGIN)
+      res.setHeader('vary', 'Origin')
+    }
+    if (req.method === 'OPTIONS') {
+      if (CORS_ORIGIN) {
+        res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS')
+        res.setHeader('access-control-allow-headers', 'content-type')
+        res.setHeader('access-control-max-age', '86400')
+      }
+      res.writeHead(204)
+      res.end()
+      return
+    }
     const url = new URL(req.url ?? '/', 'http://x')
     if (req.method === 'GET' && url.pathname === '/api/health') {
       json(res, 200, { ok: true })

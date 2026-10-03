@@ -1,0 +1,26 @@
+# Optional TLS front door: expose the counts API over public HTTPS so
+# static hosting (GitHub Pages) can use it. API_ORIGIN must be a DNS name
+# pointing at this host (Caddy fetches TLS certs automatically).
+# Usage:
+#   API_ORIGIN=api.example.com docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d db api tls
+services:
+  tls:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddydata:/data
+    command:
+      [
+        "caddy",
+        "reverse-proxy",
+        "--from",
+        "${API_ORIGIN:?set API_ORIGIN to your API domain}",
+        "--to",
+        "api:3001",
+      ]
+
+volumes:
+  caddydata:
