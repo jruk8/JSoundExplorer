@@ -54,7 +54,7 @@
 - To cut a release: push `main`, then `git tag 1.2.3 && git push origin 1.2.3`.
 - `release.yml` validates the tag, builds, attaches `dist.zip`, and publishes
   a GitHub Release with git-cliff notes. Anything not shaped `x.y.z` fails fast.
-- Pages deploys (`deploy.yml`) run on every `main` push, independent of tags.
+- Pages deploys (`deploy.yml`) run on version tags only, same filter as releases.
 
 ## Changelog (git-cliff)
 

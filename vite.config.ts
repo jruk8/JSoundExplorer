@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Minimal Node typing for the proxy override (avoids pulling @types/node
+// into the browser compilation, whose tsconfig "types" are restricted).
+declare const process: { env: Record<string, string | undefined> }
+
 // Dev server listens on all interfaces so it is reachable from outside
 // containers (and across WSL). Polling keeps hot reload working through
 // Docker bind mounts, where native file-watch events often don't arrive.
