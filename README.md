@@ -1,5 +1,6 @@
 # JSoundExplorer
 Sound Explorer for Minecraft sounds, natively JMHScript compatible.
+Inspired by [mudkjp](https://github.com/mudkjp/minecraft-sound-explorer).
 
 ## Run with Docker
 
