@@ -14,6 +14,8 @@ import { en, formatString } from '../locales/en.ts'
 export interface VaultProps {
   keys: string[]
   version: string | null
+  /** True while the catalog loads; the subtitle stays blank until it resolves. */
+  loading: boolean
   play: (key: string, opts?: PlayOpts) => void
   onDone: () => void
 }
@@ -60,7 +62,7 @@ function VaultSeam({ className }: { className: string }) {
 }
 
 /** Vault intro: drag either way against exponential resistance, or just click. */
-export function Vault({ keys, version, play, onDone }: VaultProps) {
+export function Vault({ keys, version, loading, play, onDone }: VaultProps) {
   const [color] = useState(vaultColor)
   const [dragging, setDragging] = useState(false)
   const topRef = useRef<HTMLDivElement | null>(null)
@@ -203,10 +205,12 @@ export function Vault({ keys, version, play, onDone }: VaultProps) {
       </div>
       <div ref={bottomRef} className="vault-half vault-bottom" style={{ background: color }}>
         <VaultSeam className="vault-seam vault-seam-bottom" />
-        <p className="vault-subtitle">
-          {version === null
-            ? en.vault.subtitleUnknown
-            : formatString(en.vault.subtitle, { version })}
+        <p className={loading ? 'vault-subtitle' : 'vault-subtitle ready'}>
+          {loading
+            ? ' '
+            : version === null
+              ? en.vault.subtitleUnknown
+              : formatString(en.vault.subtitle, { version })}
         </p>
       </div>
     </div>

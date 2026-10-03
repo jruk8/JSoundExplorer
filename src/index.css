@@ -915,6 +915,12 @@ body {
   font-size: 1.1rem;
   letter-spacing: 0.06em;
   color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.vault-subtitle.ready {
+  opacity: 1;
 }
 
 .vault-seam {

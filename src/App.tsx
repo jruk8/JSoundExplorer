@@ -246,7 +246,7 @@ export default function App() {
         globalPlays={globalPlays}
       />
       {vault && (
-        <Vault keys={allKeys} version={version} play={playback.play} onDone={() => setVault(false)} />
+        <Vault keys={allKeys} version={version} loading={loading} play={playback.play} onDone={() => setVault(false)} />
       )}
       {game.active && (
         <SwipeGame
