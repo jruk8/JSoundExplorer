@@ -1,5 +1,7 @@
 # ---- build stage: install deps, bake catalog, build SPA ----
 FROM node:22-alpine AS build
+# Git bakes the release version from tags (.git rides along in the context).
+RUN apk add --no-cache git
 WORKDIR /app
 COPY package.json ./
 RUN npm install --no-audit --no-fund

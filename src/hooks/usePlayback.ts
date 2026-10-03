@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { SoundCatalog } from '../lib/catalog.ts'
 import { buildResourceUrl, pickVariant } from '../lib/catalog.ts'
 import { mockBlipDurationMs, playMockBlip, playRemoteUrl } from '../lib/playback.ts'
+import type { PlayHistoryEntry } from '../lib/preferences.ts'
 
 export interface PlayOpts {
   pitch?: number
   volume?: number
+  /** Internal sounds (vault fanfare): played but never logged to history. */
+  internal?: boolean
 }
 
 export interface PlaybackOptions {
@@ -14,6 +17,7 @@ export interface PlaybackOptions {
   pitch: number
   volume: number
   resolveMember: (key: string) => string
+  onPlay: (entry: PlayHistoryEntry) => void
 }
 
 /** Single-playback controller: at most one sound plays at a time. */
@@ -23,6 +27,7 @@ export function usePlayback({
   pitch,
   volume,
   resolveMember,
+  onPlay,
 }: PlaybackOptions) {
   const [playingKey, setPlayingKeyState] = useState<string | null>(null)
   const playingRef = useRef<string | null>(null)
@@ -70,19 +75,21 @@ export function usePlayback({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Live pitch: moving the slider mid-play retunes the current sound.
-  // preservesPitch stays false on the element, so the rate shifts pitch.
+  // Live mix: moving the pitch/volume sliders mid-play adjusts the
+  // current sound. preservesPitch stays false on the element, so the
+  // rate shifts real pitch.
   useEffect(() => {
     const audio = audioRef.current
     if (audio) {
       try {
         audio.playbackRate = pitch
+        audio.volume = Math.min(1, Math.max(0, volume / 100))
       } catch {
-        // Element already gone; nothing to retune.
+        // Element already gone; nothing to adjust.
       }
     }
     // Mock blips are 180ms; no human can drag a slider inside one.
-  }, [pitch])
+  }, [pitch, volume])
 
   // Escape cancels any playing sound immediately.
   useEffect(() => {
@@ -105,6 +112,7 @@ export function usePlayback({
     stopCurrent()
     if (offline) {
       setPlaying(key)
+      if (!opts?.internal) onPlay({ key, pitch: p, volume: v })
       // Highlight follows the blip duration even where WebAudio is missing.
       window.clearTimeout(mockTimerRef.current)
       mockTimerRef.current = window.setTimeout(() => {
@@ -145,6 +153,7 @@ export function usePlayback({
       return
     }
     setPlaying(key)
+    if (!opts?.internal) onPlay({ key, pitch: p, volume: v })
     audio.onended = () => {
       if (playingRef.current === key) setPlaying(null)
     }

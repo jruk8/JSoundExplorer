@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { compactKeys, namespaceOf, pickMember } from './lib/catalog.ts'
 import { DOUBLE_CLICK_MS } from './lib/interaction.ts'
+import type { PlayHistoryEntry } from './lib/preferences.ts'
+import { Vault } from './components/Vault.tsx'
 import { useCatalog } from './hooks/useCatalog.ts'
 import { useCopyLabel } from './hooks/useCopyLabel.ts'
+import { useHistory } from './hooks/useHistory.ts'
 import { useJmh } from './hooks/useJmh.ts'
 import { useNamespaces } from './hooks/useNamespaces.ts'
 import { usePlayback } from './hooks/usePlayback.ts'
@@ -10,7 +13,7 @@ import { usePlayCounts } from './hooks/usePlayCounts.ts'
 import { useSurprise } from './hooks/useSurprise.ts'
 import { useSwipeGame } from './hooks/useSwipeGame.ts'
 import { Controls } from './components/Controls.tsx'
-import { ExtrasPanel } from './components/ExtrasPanel.tsx'
+import { OptionsPanel } from './components/OptionsPanel.tsx'
 import { Sidebar } from './components/Sidebar.tsx'
 import { SoundList } from './components/SoundList.tsx'
 import { SwipeGame } from './components/SwipeGame.tsx'
@@ -20,6 +23,7 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [pitch, setPitch] = useState(1)
   const [volume, setVolume] = useState(100)
+  const [vault, setVault] = useState(true)
   const [lastAutoKey, setLastAutoKey] = useState<string | null>(null)
   const memberGroups = useMemo(
     () => (catalog ? compactKeys(Object.keys(catalog)) : new Map<string, string[]>()),
@@ -45,10 +49,18 @@ export default function App() {
     memberCacheRef.current = { base, member, time: now }
     return member
   }
-  const playback = usePlayback({ catalog, offline, pitch, volume, resolveMember })
+  const history = useHistory()
+  const playback = usePlayback({
+    catalog,
+    offline,
+    pitch,
+    volume,
+    resolveMember,
+    onPlay: history.record,
+  })
   const copyLabel = useCopyLabel(playback.isPlaying)
   const ns = useNamespaces(catalog)
-  const jmh = useJmh(pitch, volume)
+  const jmh = useJmh(history.entries[0]?.key ?? null, pitch, volume)
   const playCounts = usePlayCounts()
 
   // The copied label lasts at most as long as the playing sound.
@@ -59,13 +71,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback.playingKey])
 
+  const allKeys = useMemo(() => [...memberGroups.keys()].sort(), [memberGroups])
   const keys = useMemo(() => {
-    const all = [...memberGroups.keys()].sort()
     const q = search.trim().toLowerCase()
-    return all.filter(
+    return allKeys.filter(
       (k) => (!q || k.toLowerCase().includes(q)) && ns.isEnabled(namespaceOf(k)),
     )
-  }, [memberGroups, search, ns.prefs])
+  }, [allKeys, search, ns.prefs])
 
   // A row removed from the list stops its sound if playing.
   useEffect(() => {
@@ -78,13 +90,38 @@ export default function App() {
   function handleSoundClick(key: string, auto = false, pitchOverride: number | null = null) {
     if (auto) setLastAutoKey(key)
     const member = resolveMember(key)
-    jmh.selectKey(member)
     if (copyLabel.resolveClick(key, Date.now(), member) === 'play') {
       if (!auto && key !== lastAutoKey) {
         setLastAutoKey(null)
       }
       playback.play(key, pitchOverride === null ? undefined : { pitch: pitchOverride })
       playCounts.recordPlay(key)
+    }
+  }
+
+  // History jumps ensure the row's namespace is on, then reuse the
+  // surprise machinery (single click) or jump instantly (double click).
+  function ensureNamespace(key: string): boolean {
+    const name = namespaceOf(key)
+    if (ns.isEnabled(name)) return false
+    ns.enableNamespace(name)
+    return true
+  }
+
+  function handleHistorySelect(entry: PlayHistoryEntry) {
+    if (ensureNamespace(entry.key)) {
+      // Let the list re-render before measuring the row.
+      window.setTimeout(() => surprise.spotlight(entry.key, entry.pitch), 0)
+    } else {
+      surprise.spotlight(entry.key, entry.pitch)
+    }
+  }
+
+  function handleHistoryInstant(entry: PlayHistoryEntry) {
+    if (ensureNamespace(entry.key)) {
+      window.setTimeout(() => surprise.jumpTo(entry.key, entry.pitch), 0)
+    } else {
+      surprise.jumpTo(entry.key, entry.pitch)
     }
   }
 
@@ -121,10 +158,29 @@ export default function App() {
 
       <div className="main">
         <header className="app-header">
-          <h1 className="app-title">JSoundExplorer</h1>
-          <span data-testid="status" className="app-status">
-            {offline ? 'offline (mock)' : version ? `v${version}` : loading ? 'loading…' : 'online'}
-          </span>
+          <h1 className="app-title">
+            JSoundExplorer{' '}
+            <span data-testid="app-version" className="app-version">
+              {__APP_VERSION__}
+            </span>
+          </h1>
+          <p data-testid="app-tagline" className="app-tagline">
+            {version !== null
+              ? `MC${version} Sound Explorer`
+              : offline
+                ? 'Offline Sound Explorer'
+                : loading
+                  ? 'Loading Sound Explorer'
+                  : 'Online Sound Explorer'}
+          </p>
+          <nav className="app-links" aria-label="Project links">
+            <a href="https://github.com/jruk8/JSoundExplorer" target="_blank" rel="noreferrer">
+              » GitHub
+            </a>
+            <a href="https://jruk8.github.io/JManhunt/" target="_blank" rel="noreferrer">
+              » JManhunt
+            </a>
+          </nav>
         </header>
 
         <Controls
@@ -148,7 +204,19 @@ export default function App() {
         />
       </div>
 
-      <ExtrasPanel jmhText={jmh.jmhText} jmhCopied={jmh.jmhCopied} onCopy={jmh.copyJmh} />
+      <OptionsPanel
+        jmhText={jmh.jmhText}
+        jmhCopied={jmh.jmhCopied}
+        onCopy={jmh.copyJmh}
+        command={jmh.command}
+        onCommandChange={jmh.setCommand}
+        entries={history.entries}
+        onHistorySelect={handleHistorySelect}
+        onHistoryInstant={handleHistoryInstant}
+      />
+      {vault && (
+        <Vault keys={allKeys} version={version} play={playback.play} onDone={() => setVault(false)} />
+      )}
       {game.active && (
         <SwipeGame
           closing={game.closing}

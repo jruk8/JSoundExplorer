@@ -5,7 +5,7 @@ import { SWIPE_COMMIT_PX, SWIPE_REVEAL_MS, easeOutBack } from '../lib/interactio
 import { PlayIcon, StopIcon } from './icons.tsx'
 
 export interface SwipeCardProps {
-  shortId: string
+  title: string
   playing: boolean
   onRevealPlay: () => void
   onCommit: (dir: SwipeDirection) => void
@@ -46,7 +46,7 @@ function sampleVelocity(samples: DragSample[]): { vx: number; vy: number } {
 }
 
 export function SwipeCard({
-  shortId,
+  title,
   playing,
   onRevealPlay,
   onCommit,
@@ -220,7 +220,7 @@ export function SwipeCard({
     return (
       <div className="swipe-body">
         <div ref={textRef} className="swipe-id">
-          {shortId}
+          {title}
         </div>
         <div className="swipe-play-row">
           <button

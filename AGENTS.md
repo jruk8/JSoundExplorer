@@ -23,12 +23,14 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 - `src/lib/` » framework-free business logic: `catalog` (types/parse/mock/URLs),
   `playback` (remote ogg + WebAudio blips), `preferences` (localStorage),
   `scripting` (JMHScript format), `interaction` (slider geometry, snap, timing,
-  clipboard, easing), `playcounts` (count formatting, counts API client).
+  clipboard, easing), `playcounts` (count formatting, counts API client),
+  `version` (git-tag display version).
 - `src/hooks/` » behavior/state: `useCatalog`, `usePlayback` (single-playback),
   `useCopyLabel` (double-click tracking), `useNamespaces`, `useSurprise`,
-  `useSwipeGame`, `usePlayCounts`, `useJmh`.
+  `useSwipeGame`, `usePlayCounts`, `useJmh`, `useHistory` (persisted plays).
 - `src/components/` » pure view: `Sidebar`, `Controls`, `SoundList`,
-  `ExtrasPanel`, `SwipeGame`, `SwipeCard`, `icons`. `App.tsx` only composes hooks + components.
+  `OptionsPanel`, `CommandSelect`, `HistoryList`, `SwipeGame`, `SwipeCard`,
+  `Vault`, `icons`. `App.tsx` only composes hooks + components.
 - `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
 - `server/` » counts API (node:http + mysql2) + its Dockerfile; `db`
   (MariaDB) alongside in compose; `docker-compose.tls.yml` adds a Caddy

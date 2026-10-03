@@ -39,6 +39,77 @@ export function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
 
+const VAULT_FALLBACK = '#1a1d24' // --bg #1e2129 darkened 13%.
+
+/**
+ * Darken a #rgb/#rrggbb/rgb() color by factor (0-1), returning #rrggbb.
+ * Unparseable input falls back to the darkened default background.
+ */
+export function darkenColor(color: string, factor: number): string {
+  const c = color.trim().toLowerCase()
+  let r = -1
+  let g = 0
+  let b = 0
+  if (c.startsWith('#')) {
+    const hex = c.slice(1)
+    if (/^[0-9a-f]{3}$/.test(hex)) {
+      r = parseInt(hex[0] + hex[0], 16)
+      g = parseInt(hex[1] + hex[1], 16)
+      b = parseInt(hex[2] + hex[2], 16)
+    } else if (/^[0-9a-f]{6}$/.test(hex)) {
+      r = parseInt(hex.slice(0, 2), 16)
+      g = parseInt(hex.slice(2, 4), 16)
+      b = parseInt(hex.slice(4, 6), 16)
+    }
+  } else {
+    const m = c.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/)
+    if (m) {
+      r = Number(m[1])
+      g = Number(m[2])
+      b = Number(m[3])
+    }
+  }
+  if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) return VAULT_FALLBACK
+  const mix = (v: number) =>
+    Math.round(v * Math.min(1, Math.max(0, factor)))
+      .toString(16)
+      .padStart(2, '0')
+  return `#${mix(r)}${mix(g)}${mix(b)}`
+}
+
+// Vault intro tuning.
+export const VAULT_SOUNDS = ['random.fizz', 'random.fuse', 'random.glass', 'random.explode']
+export const VAULT_PITCHES = [0.9, 1, 1.1]
+export const VAULT_OPEN_PX = 240
+export const VAULT_COMMIT_FRACTION = 0.5
+export const VAULT_FLING_PX_PER_MS = 0.8
+export const VAULT_CLICK_PX = 6
+
+/** Cubic resistance: barely budges at first, then breaks open. */
+export function vaultSeparation(distPx: number, clearPx: number): number {
+  const n = Math.min(1, Math.max(0, distPx / VAULT_OPEN_PX))
+  return n * n * n * clearPx
+}
+
+/** Click, committed drag, or fling all open the vault. */
+export function vaultShouldOpen(distPx: number, velPxPerMs: number): boolean {
+  if (distPx < VAULT_CLICK_PX) return true
+  const n = Math.min(1, distPx / VAULT_OPEN_PX)
+  return n >= VAULT_COMMIT_FRACTION || Math.abs(velPxPerMs) > VAULT_FLING_PX_PER_MS
+}
+
+/** Vault fanfare: prefer the named sounds, else any catalog key, else null. */
+export function pickVaultSound(pool: string[], random: () => number = Math.random): string | null {
+  const matches = VAULT_SOUNDS.filter((s) => pool.includes(s))
+  const from = matches.length > 0 ? matches : pool
+  if (from.length === 0) return null
+  return from[Math.floor(random() * from.length)]
+}
+
+export function pickVaultPitch(random: () => number = Math.random): number {
+  return VAULT_PITCHES[Math.floor(random() * VAULT_PITCHES.length)]
+}
+
 export async function copyText(text: string): Promise<void> {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text)

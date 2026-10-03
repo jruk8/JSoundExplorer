@@ -96,3 +96,19 @@ export function StopIcon() {
     </svg>
   )
 }
+
+export function ScrollUpIcon() {
+  return (
+    <svg className="history-arrow-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
+      <path d="M8 4 L13.5 12 L2.5 12 Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function ScrollDownIcon() {
+  return (
+    <svg className="history-arrow-icon" viewBox="0 0 16 16" fill="none" stroke="none" aria-hidden="true">
+      <path d="M8 12 L2.5 4 L13.5 4 Z" fill="currentColor" />
+    </svg>
+  )
+}

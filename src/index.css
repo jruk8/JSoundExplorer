@@ -166,8 +166,8 @@ body {
 
 .app-header {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
   padding: 20px 0 12px;
   border-bottom: 2px solid var(--line);
 }
@@ -178,10 +178,32 @@ body {
   letter-spacing: 0.02em;
 }
 
-.app-status {
+.app-version {
   font-family: ui-monospace, monospace;
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.app-tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.app-links {
+  display: flex;
+  gap: 16px;
+}
+
+.app-links a {
+  color: var(--accent-light);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.app-links a:hover {
+  color: #fff;
+  text-decoration: underline;
 }
 
 .controls {
@@ -413,8 +435,8 @@ body {
   color: #6b7280;
 }
 
-/* Right sidebar: Extras panel with the JMHScript snippet box. */
-.extras {
+/* Right sidebar: Options panel with the JMHScript snippet box. */
+.options {
   width: 300px;
   flex-shrink: 0;
   position: sticky;
@@ -423,7 +445,7 @@ body {
   border-left: 1px solid var(--line);
 }
 
-.extras-title {
+.options-title {
   margin: 0 0 12px;
   font-size: 1.1rem;
   letter-spacing: 0.02em;
@@ -486,6 +508,271 @@ body {
   color: var(--accent);
 }
 
+.command-select {
+  position: relative;
+  margin-top: 6px;
+}
+
+.jmhscript-command {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: #fff;
+  background-color: var(--panel);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 2px solid var(--line);
+  border-radius: 0;
+  padding: 8px 30px 8px 10px;
+  outline: none;
+  cursor: pointer;
+}
+
+.jmhscript-command:focus {
+  border-color: var(--accent);
+}
+
+.command-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.command-list:focus {
+  outline: none;
+}
+
+.command-option {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: #fff;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.command-option:hover,
+.command-option.focused {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.command-option.selected {
+  background: var(--accent);
+}
+
+.command-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.history-title {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.history-scroll {
+  display: flex;
+  align-items: stretch;
+  max-height: 140px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+}
+
+.history-items {
+  flex: 1;
+  min-width: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.history-items::-webkit-scrollbar {
+  display: none;
+}
+
+.history-bar {
+  flex-shrink: 0;
+  width: 20px;
+  display: flex;
+  flex-direction: column;
+  background: var(--track);
+  border-left: 2px solid var(--line);
+}
+
+.history-arrow {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-light);
+  background: var(--accent);
+  border: 2px solid var(--accent-light);
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.history-arrow-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.history-track {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.history-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  background: var(--accent);
+  border: 2px solid var(--accent-light);
+  border-radius: 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.history-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-mix {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.history-empty {
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* The history scrollbar is a custom element (see HistoryList): native
+   scrollbar pseudo-elements ignore blocky styling in several browsers. */
+
+/* Vault intro: two halves parting around a red seam. */
+.vault {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.vault.dragging {
+  cursor: grabbing;
+}
+
+.vault-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  will-change: transform;
+}
+
+.vault-top {
+  top: 0;
+  /* Above the bottom half so the overhanging seam stays visible. */
+  z-index: 1;
+}
+
+.vault-bottom {
+  bottom: 0;
+}
+
+.vault-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 36px;
+  margin: 0;
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: #fff;
+}
+
+.vault-subtitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  margin: 0;
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.vault-seam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -20px;
+  width: 100%;
+  height: 22px;
+  display: block;
+  pointer-events: none;
+}
+
+/* Bottom-half copy: same line, straddling the edge from above. */
+.vault-seam-bottom {
+  top: -2px;
+  bottom: auto;
+}
 @media (max-width: 760px) {
   .app {
     flex-direction: column;
@@ -510,7 +797,7 @@ body {
     flex-wrap: wrap;
   }
 
-  .extras {
+  .options {
     width: 100%;
     position: static;
     border-left: none;

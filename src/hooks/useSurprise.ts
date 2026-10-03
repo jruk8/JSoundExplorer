@@ -57,6 +57,14 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
     window.addEventListener('scroll', guard, { passive: true })
   }
 
+  /** Window scroll offset that centers a row, clamped to the page. */
+  function centeredScrollY(el: Element): number {
+    const rect = el.getBoundingClientRect()
+    const targetY = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2
+    const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+    return Math.min(Math.max(0, targetY), maxY)
+  }
+
   /**
    * Ease-out scroll a row as close to viewport center as clamping allows.
    * Resolves false when no scrolling was needed at all.
@@ -71,10 +79,7 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
         resolve(false)
         return
       }
-      const rect = el.getBoundingClientRect()
-      const targetY = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2
-      const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
-      const clamped = Math.min(Math.max(0, targetY), maxY)
+      const clamped = centeredScrollY(el)
       if (Math.abs(clamped - window.scrollY) < 1) {
         resolve(false)
         return
@@ -151,5 +156,18 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
     runToKey(key, pitch)
   }
 
-  return { surprise, spotlight, surprisePitch, setSurprisePitch }
+  /** Instant jump: kill everything in flight, center with no ease, pick now. */
+  function jumpTo(key: string, pitch: number | null) {
+    cancelRun()
+    if (pitch !== null) {
+      latestRef.current.setPitch(pitch)
+    }
+    const el = document.querySelector(`[data-testid="sound-${key}"]`)
+    if (el) {
+      window.scrollTo(0, centeredScrollY(el))
+    }
+    latestRef.current.onPick(key, pitch)
+  }
+
+  return { surprise, spotlight, jumpTo, surprisePitch, setSurprisePitch }
 }

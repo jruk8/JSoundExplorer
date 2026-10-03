@@ -1,4 +1,4 @@
-import { shortId } from '../lib/catalog.ts'
+import { cardTitle } from '../lib/catalog.ts'
 import type { SwipeDirection } from '../lib/interaction.ts'
 import { SwipeCard } from './SwipeCard.tsx'
 
@@ -40,7 +40,7 @@ export function SwipeGame({
         <div className="swipe-stage">
           <SwipeCard
             key={cardKey}
-            shortId={shortId(soundKey)}
+            title={cardTitle(soundKey)}
             playing={playing}
             onRevealPlay={onRevealPlay}
             onCommit={onCommit}

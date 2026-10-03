@@ -31,6 +31,21 @@ function shuffled<T>(items: T[]): T[] {
   return pool
 }
 
+/**
+ * Reshuffle runoff picks so the previous round's last card never opens
+ * the next round (swapped to a random later slot when it lands first).
+ */
+export function shuffleRunoff(cards: SwipeCardData[], lastKey: string): SwipeCardData[] {
+  const next = shuffled(cards)
+  if (next.length > 1 && next[0].key === lastKey) {
+    const j = 1 + Math.floor(Math.random() * (next.length - 1))
+    const tmp = next[0]
+    next[0] = next[j]
+    next[j] = tmp
+  }
+  return next
+}
+
 /** Tinder-style swipe game: deck, rounds, runoff, winner spotlight. */
 export function useSwipeGame({
   keys,
@@ -110,7 +125,8 @@ export function useSwipeGame({
     window.clearTimeout(closeTimerRef.current)
     setPicks([])
     setIndex(0)
-    setRoundNo((n) => n + 1)
+    // Fresh game, round 1: runoff rounds (2+) never close empty (see exitThrow).
+    setRoundNo(1)
     setDeck(fresh)
     setClosing(false)
     setOverlayReady(false)
@@ -141,12 +157,17 @@ export function useSwipeGame({
       return
     }
     if (nextPicks.length === 0) {
-      closeGame(null)
+      if (roundNo >= 2 && deck.length > 0) {
+        // Runoff whitewash: crown a random finalist instead of closing empty.
+        closeGame(deck[Math.floor(Math.random() * deck.length)])
+      } else {
+        closeGame(null)
+      }
     } else if (nextPicks.length === 1) {
       closeGame(nextPicks[0])
     } else {
       // Runoff round with the picked cards (same pitches), reshuffled.
-      setDeck(shuffled(nextPicks))
+      setDeck(shuffleRunoff(nextPicks, card.key))
       setPicks([])
       setIndex(0)
       setRoundNo((n) => n + 1)

@@ -92,15 +92,29 @@ export function mockWaveformForKey(key: string): MockWaveform {
   return WAVEFORM_BY_SUFFIX[suffix] ?? 'sine'
 }
 
-/** Bare sound id: key without namespaces or subnamespaces. */
-export function shortId(key: string): string {
-  const parts = key.split('.')
-  return parts[parts.length - 1] ?? key
+/**
+ * Swipe card title: keep the last two dot segments, split on dots and
+ * underscores, and capitalize each word ("mob.wither_skeleton.hurt" ->
+ * "Wither Skeleton Hurt"). Short keys degrade gracefully ("ui.click" ->
+ * "Ui Click", "click" -> "Click").
+ */
+export function cardTitle(key: string): string {
+  return key
+    .split('.')
+    .slice(-2)
+    .join('.')
+    .split(/[._]/)
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 
-/** Compact base: strip a numeric sibling suffix (break4 -> break). */
+/** Compact base: strip a numeric sibling suffix (break4 -> break, hurt_2 -> hurt). */
 export function baseKey(key: string): string {
-  return key.replace(/([A-Za-z_])[0-9]+$/, '$1')
+  const stripped = key.replace(/([A-Za-z_])[0-9]+$/, '$1')
+  // An underscore separator left dangling by the strip goes too.
+  if (stripped !== key && stripped.endsWith('_')) return stripped.slice(0, -1)
+  return stripped
 }
 
 /** Group raw keys by compact base; bare keys join digit siblings. */

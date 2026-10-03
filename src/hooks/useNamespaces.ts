@@ -42,5 +42,9 @@ export function useNamespaces(catalog: SoundCatalog | null) {
     setPrefs((prev) => ({ ...prev, [ns]: !(prev[ns] ?? !DEFAULT_OFF_NAMESPACES.has(ns)) }))
   }
 
-  return { namespaces, counts, prefs, isEnabled, allOn, toggleAll, toggleNamespace }
+  function enableNamespace(ns: string) {
+    setPrefs((prev) => ({ ...prev, [ns]: true }))
+  }
+
+  return { namespaces, counts, prefs, isEnabled, allOn, toggleAll, toggleNamespace, enableNamespace }
 }

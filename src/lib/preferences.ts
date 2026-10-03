@@ -1,4 +1,4 @@
-// Persisted user preferences (namespace toggles). localStorage only;
+// Persisted user state (namespace toggles, play history). localStorage only;
 // no React dependency.
 
 export const NAMESPACE_PREFS_KEY = 'jsoundexplorer.namespaceToggles.v1'
@@ -26,6 +26,55 @@ export function loadNamespacePrefs(): Record<string, boolean> {
 export function saveNamespacePrefs(prefs: Record<string, boolean>): void {
   try {
     localStorage.setItem(NAMESPACE_PREFS_KEY, JSON.stringify(prefs))
+  } catch {
+    // Storage unavailable (private mode etc.): run unpersisted.
+  }
+}
+
+export const HISTORY_STORAGE_KEY = 'jsoundexplorer.history.v1'
+export const HISTORY_LIMIT = 50
+
+export interface PlayHistoryEntry {
+  key: string
+  pitch: number
+  volume: number
+}
+
+function isHistoryEntry(value: unknown): value is PlayHistoryEntry {
+  if (typeof value !== 'object' || value === null) return false
+  const e = value as Record<string, unknown>
+  return (
+    typeof e.key === 'string' &&
+    typeof e.pitch === 'number' &&
+    Number.isFinite(e.pitch) &&
+    typeof e.volume === 'number' &&
+    Number.isFinite(e.volume)
+  )
+}
+
+/** Prepend an entry, dropping any older entry for the same key (replay bump). */
+export function insertHistoryEntry(
+  entries: PlayHistoryEntry[],
+  entry: PlayHistoryEntry,
+): PlayHistoryEntry[] {
+  return [entry, ...entries.filter((e) => e.key !== entry.key)].slice(0, HISTORY_LIMIT)
+}
+
+export function loadPlayHistory(): PlayHistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(isHistoryEntry).slice(0, HISTORY_LIMIT)
+  } catch {
+    return []
+  }
+}
+
+export function savePlayHistory(entries: PlayHistoryEntry[]): void {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(entries.slice(0, HISTORY_LIMIT)))
   } catch {
     // Storage unavailable (private mode etc.): run unpersisted.
   }

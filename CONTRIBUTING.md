@@ -20,6 +20,9 @@
 - Dev container (hot reload, source bind-mounted):
   `docker compose --profile dev up -d --build dev`, then open
   http://localhost:5173 in a browser.
+- The header version is baked from git tags when the build runs or the dev
+  server starts (`-SNAPSHOT` when dirty or untagged) » restart the dev
+  server after tagging to pick up a new release version.
 - Stop everything: `docker compose --profile dev down`.
 - CI (`build.yml`, on push/PR): install, compose validation, best-effort
   catalog fetch, build, dist artifact upload.
