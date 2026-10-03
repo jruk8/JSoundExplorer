@@ -1,5 +1,5 @@
 # JSoundExplorer
-Sound Explorer for Minecraft sounds, natively JMHScript compatible. 
+Sound Explorer for Minecraft sounds, natively [JMHScript](https://jruk8.github.io/JManhunt/configuration/modifiers/tags-advanced/#messages-and-sounds) compatible. 
 Partly inspired by [mudkjp's](https://github.com/mudkjp/minecraft-sound-explorer).
 
 ## Development
