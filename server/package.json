@@ -1,0 +1,8 @@
+{
+  "name": "jsoundexplorer-plays-api",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "mysql2": "^3.0.0"
+  }
+}

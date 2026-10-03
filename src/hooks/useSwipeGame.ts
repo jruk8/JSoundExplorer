@@ -10,16 +10,34 @@ export interface SwipeCardData {
 export interface SwipeGameOptions {
   keys: string[]
   volume: number
+  pitch: number
+  randomizePitch: boolean
+  recordPlay: (key: string) => void
   playingKey: string | null
   play: (key: string, opts?: { pitch?: number; volume?: number }) => void
   stop: () => void
   spotlight: (key: string, pitch: number) => void
 }
 
+/** Fisher-Yates shuffle; each round reorders whatever cards remain. */
+function shuffled<T>(items: T[]): T[] {
+  const pool = [...items]
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = pool[i]
+    pool[i] = pool[j]
+    pool[j] = tmp
+  }
+  return pool
+}
+
 /** Tinder-style swipe game: deck, rounds, runoff, winner spotlight. */
 export function useSwipeGame({
   keys,
   volume,
+  pitch,
+  randomizePitch,
+  recordPlay,
   playingKey,
   play,
   stop,
@@ -44,6 +62,19 @@ export function useSwipeGame({
     }
   }, [])
 
+  useEffect(() => {
+    if (!active || closing) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        dismiss()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  })
+
   function closeGame(winner: SwipeCardData | null) {
     setClosing(true)
     window.clearTimeout(closeTimerRef.current)
@@ -60,17 +91,18 @@ export function useSwipeGame({
     }, SWIPE_OVERLAY_MS)
   }
 
+  function dismiss() {
+    if (!active || closing) return
+    closeGame(picks.length === 1 ? picks[0] : null)
+  }
+
   function open() {
-    const pool = [...keys]
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      const tmp = pool[i]
-      pool[i] = pool[j]
-      pool[j] = tmp
-    }
+    const pool = shuffled(keys)
     const fresh = pool.slice(0, 6).map((key) => ({
       key,
-      pitch: SURPRISE_PITCHES[Math.floor(Math.random() * SURPRISE_PITCHES.length)],
+      pitch: randomizePitch
+        ? SURPRISE_PITCHES[Math.floor(Math.random() * SURPRISE_PITCHES.length)]
+        : pitch,
     }))
     if (fresh.length === 0) return
     stop()
@@ -94,6 +126,7 @@ export function useSwipeGame({
     if (dir === 'right') {
       // Instant replay with a +15% power boost, stopping anything playing.
       play(card.key, { pitch: card.pitch, volume: volume * 1.15 })
+    recordPlay(card.key)
     }
   }
 
@@ -112,8 +145,8 @@ export function useSwipeGame({
     } else if (nextPicks.length === 1) {
       closeGame(nextPicks[0])
     } else {
-      // Runoff round with the picked cards (same pitches), seamlessly.
-      setDeck(nextPicks)
+      // Runoff round with the picked cards (same pitches), reshuffled.
+      setDeck(shuffled(nextPicks))
       setPicks([])
       setIndex(0)
       setRoundNo((n) => n + 1)
@@ -127,6 +160,7 @@ export function useSwipeGame({
       stop()
     } else {
       play(card.key, { pitch: card.pitch })
+      recordPlay(card.key)
     }
   }
 
@@ -134,6 +168,7 @@ export function useSwipeGame({
     const card = deck[index]
     if (!card) return
     play(card.key, { pitch: card.pitch })
+    recordPlay(card.key)
   }
 
   const current = index < deck.length ? deck[index] : null
@@ -145,6 +180,7 @@ export function useSwipeGame({
     current,
     cardKey: `${roundNo}:${index}`,
     open,
+    dismiss,
     commitThrow,
     exitThrow,
     togglePlay,

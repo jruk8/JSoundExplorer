@@ -23,13 +23,15 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 - `src/lib/` » framework-free business logic: `catalog` (types/parse/mock/URLs),
   `playback` (remote ogg + WebAudio blips), `preferences` (localStorage),
   `scripting` (JMHScript format), `interaction` (slider geometry, snap, timing,
-  clipboard, easing).
+  clipboard, easing), `playcounts` (count formatting, counts API client).
 - `src/hooks/` » behavior/state: `useCatalog`, `usePlayback` (single-playback),
   `useCopyLabel` (double-click tracking), `useNamespaces`, `useSurprise`,
-  `useSwipeGame`, `useJmh`.
+  `useSwipeGame`, `usePlayCounts`, `useJmh`.
 - `src/components/` » pure view: `Sidebar`, `Controls`, `SoundList`,
   `ExtrasPanel`, `SwipeGame`, `SwipeCard`, `icons`. `App.tsx` only composes hooks + components.
 - `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
+- `server/` » counts API (node:http + mysql2) + its Dockerfile; `db`
+  (MariaDB) alongside in compose.
 - `.github/workflows/` » `build.yml` (CI), `deploy.yml` (Pages),
   `release.yml` (tag-driven GitHub Releases); `.github/dependabot.yml`.
 - `cliff.toml` » git-cliff changelog config (Conventional Commits).
@@ -58,7 +60,18 @@ React 18 + TypeScript (strict) + Vite 6. No test harness, no router, no state li
 - Surprise: ease-out scroll to a random row, short beat, auto-click; any
   user scroll during the run cancels it; never repeats the last pick.
 - Swipe!: six-card Tinder game (flip reveal + autoplay, drag to throw
-  left/right with spin, runoff rounds, winner spotlights).
+  left/right with spin, runoff rounds, winner spotlights; dim-click/Escape
+  dismisses (lone pick spotlights); rounds reshuffle, and the last
+  auto-played row stays marked; card pitch randomizes only when
+  Also-pitch is on.
+- Numeric siblings compact to one row (break1..4 » break); interactions
+  resolve a random real member internally.
+- Escape stops any playing sound.
+- Auto-mark is a focus-style outline box; playing another row clears it.
+- Right-swipe replays at 1.15x gain (mock path unclamped; remote caps at
+  the element ceiling).
+- Play counts: anonymous per-base totals in MariaDB; rows show compact
+  counts (1.0K), hidden at zero; 5s batched upload, 10s refresh.
 
 ## Verification
 

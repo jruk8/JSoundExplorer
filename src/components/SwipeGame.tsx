@@ -12,6 +12,7 @@ export interface SwipeGameProps {
   onCommit: (dir: SwipeDirection) => void
   onExit: (dir: SwipeDirection) => void
   onTogglePlay: () => void
+  onDismiss: () => void
 }
 
 export function SwipeGame({
@@ -24,6 +25,7 @@ export function SwipeGame({
   onCommit,
   onExit,
   onTogglePlay,
+  onDismiss,
 }: SwipeGameProps) {
   return (
     <div
@@ -33,7 +35,7 @@ export function SwipeGame({
       aria-label="Swipe game"
       aria-modal="true"
     >
-      <div className="swipe-dim" />
+      <div className="swipe-dim" onClick={onDismiss} />
       {!closing && overlayReady && soundKey !== null && (
         <div className="swipe-stage">
           <SwipeCard

@@ -14,5 +14,11 @@ export default defineConfig({
       usePolling: true,
       interval: 500,
     },
+    proxy: {
+      '/api': {
+        target: process.env.API_PROXY ?? 'http://api:3001',
+        changeOrigin: true,
+      },
+    },
   },
 })

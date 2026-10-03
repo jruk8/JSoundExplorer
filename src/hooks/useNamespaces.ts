@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SoundCatalog } from '../lib/catalog.ts'
-import { namespaceOf } from '../lib/catalog.ts'
+import { compactKeys, namespaceOf } from '../lib/catalog.ts'
 import {
   DEFAULT_OFF_NAMESPACES,
   loadNamespacePrefs,
@@ -18,7 +18,8 @@ export function useNamespaces(catalog: SoundCatalog | null) {
   const { namespaces, counts } = useMemo(() => {
     const counts = new Map<string, number>()
     if (catalog) {
-      for (const key of Object.keys(catalog)) {
+      // Counts follow the compacted rows, not the raw numbered siblings.
+      for (const key of compactKeys(Object.keys(catalog)).keys()) {
         const ns = namespaceOf(key)
         counts.set(ns, (counts.get(ns) ?? 0) + 1)
       }

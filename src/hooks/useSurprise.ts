@@ -4,7 +4,7 @@ import { SURPRISE_PITCHES, easeOutCubic } from '../lib/interaction.ts'
 export interface SurpriseOptions {
   keys: string[]
   setPitch: (pitch: number) => void
-  onPick: (key: string) => void
+  onPick: (key: string, pitch: number | null) => void
 }
 
 /** Surprise-me sequencing: ease-out scroll, delayed auto-click, no repeats. */
@@ -120,13 +120,13 @@ export function useSurprise({ keys, setPitch, onPick }: SurpriseOptions) {
       if (!scrolled) {
         // Nothing to scroll: skip the interval too and click immediately.
         disarmScrollGuard()
-        latestRef.current.onPick(choice)
+        latestRef.current.onPick(choice, pitchToSet)
         return
       }
       clickRef.current = window.setTimeout(() => {
         if (runRef.current !== run) return
         disarmScrollGuard()
-        latestRef.current.onPick(choice)
+        latestRef.current.onPick(choice, pitchToSet)
       }, 60)
     })
   }

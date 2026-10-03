@@ -33,7 +33,8 @@ export function playMockBlip(
   volumePercent: number,
 ): () => void {
   const waveform = mockWaveformForKey(key)
-  const volume = Math.min(1, Math.max(0, volumePercent / 100))
+  // No upper clamp here: the swipe boost intentionally drives past 1.0.
+  const volume = Math.max(0, volumePercent / 100)
   const duration = MOCK_BLIP_DURATION_MS / 1000
   const now = ctx.currentTime
 
@@ -120,6 +121,7 @@ export function playRemoteUrl(
     // Resample instead of time-stretch: pitch must shift with the rate.
     // (Browsers default preservesPitch to true, which holds pitch constant.)
     audio.preservesPitch = false
+    // Element volume caps at 1.0 (browser ceiling, not our limiter).
     audio.volume = Math.min(1, Math.max(0, volumePercent / 100))
     const result = audio.play() as unknown as Promise<void> | undefined
     // jsdom and autoplay policies may yield no promise or a rejection.

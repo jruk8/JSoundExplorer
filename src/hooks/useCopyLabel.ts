@@ -48,7 +48,7 @@ export function useCopyLabel(isPlaying: () => boolean) {
    * Resolve a click on a sound: dismiss a visible label, copy on double
    * click, or play. Mutates tracking state and returns the action taken.
    */
-  function resolveClick(key: string, now: number): ClickAction {
+  function resolveClick(key: string, now: number, copyKey?: string): ClickAction {
     // A copied label is dismissed only by timeout or by clicking any sound.
     // The dismissing click also plays and restarts double-click tracking.
     if (copiedKeyRef.current !== null) {
@@ -61,7 +61,7 @@ export function useCopyLabel(isPlaying: () => boolean) {
     const last = lastClickRef.current
     if (last && last.key === key && now - last.time < DOUBLE_CLICK_MS) {
       // Second click within 0.5s: copy, no replay.
-      void copyText(key).catch(() => {})
+      void copyText(copyKey ?? key).catch(() => {})
       clearCopiedTimeouts()
       setCopied(key)
       setCopiedBlue(true)

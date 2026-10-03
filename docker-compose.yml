@@ -20,3 +20,45 @@ services:
       - .:/app
       - /app/node_modules
     restart: unless-stopped
+
+  # Anonymous per-sound play counts. No ports exposed; inspect with
+  # docker compose exec db mariadb -uroot -p
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-jsoundexplorer}
+      MARIADB_USER: ${DB_USER:-jse}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-devpw-change-me}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-devroot-change-me}
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Counts API (proxied as /api by nginx and vite; no direct port).
+  api:
+    build: ./server
+    image: jsoundexplorer-plays:latest
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-jsoundexplorer}
+      DB_USER: ${DB_USER:-jse}
+      DB_PASSWORD: ${DB_PASSWORD:-devpw-change-me}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  dbdata:

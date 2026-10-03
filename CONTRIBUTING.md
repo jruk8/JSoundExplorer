@@ -7,6 +7,8 @@
 - `npm run dev`, then open http://localhost:5173 in a browser.
 - The first install generates `package-lock.json`; commit it » Dependabot's
   npm updates need it.
+- Play counts need the stack: `cp .env.example .env` (first time only),
+  then use compose below » MariaDB + counts API come up with it.
 
 ## Build & run
 
@@ -21,6 +23,20 @@
 - Stop everything: `docker compose --profile dev down`.
 - CI (`build.yml`, on push/PR): install, compose validation, best-effort
   catalog fetch, build, dist artifact upload.
+
+## Play counts (MariaDB + API)
+
+- `docker compose up` also starts `db` (MariaDB 11, data in the `dbdata`
+  volume) and `api` (counts service, `server/`).
+- Plays batch-upload every 5s and flush on tab hide/close; totals refresh
+  every 10s. Counts are anonymous per-sound sums » see the footer note.
+- Configure via `.env` (`DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+  `DB_ROOT_PASSWORD`); without it, dev defaults apply.
+- Inspect: `docker compose exec db mariadb -uroot -p -e 'SELECT * FROM
+  plays ORDER BY plays DESC LIMIT 20'` (prompts for the root password;
+  add `--database=$DB_NAME` if you renamed it).
+- Bare `npm run dev` (no compose) simply shows no counts » the app degrades
+  gracefully when `/api` is unreachable.
 
 ## Conventions
 

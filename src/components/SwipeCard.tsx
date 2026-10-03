@@ -243,8 +243,8 @@ export function SwipeCard({
 
   if (!ready) {
     return (
-      <div className="swipe-card entering">
-        <div className="swipe-flip">
+      <div className="swipe-enter">
+        <div className="swipe-card entering">
           <div className="swipe-face swipe-front" aria-hidden="true">
             ?
           </div>

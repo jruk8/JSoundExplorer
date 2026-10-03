@@ -1,7 +1,11 @@
+import { formatPlays } from '../lib/playcounts.ts'
+
 export interface SoundListProps {
   loading: boolean
   keys: string[]
   playingKey: string | null
+  lastAutoKey: string | null
+  counts: Record<string, number>
   copiedKey: string | null
   copiedBlue: boolean
   onSoundClick: (key: string) => void
@@ -11,6 +15,8 @@ export function SoundList({
   loading,
   keys,
   playingKey,
+  lastAutoKey,
+  counts,
   copiedKey,
   copiedBlue,
   onSoundClick,
@@ -36,10 +42,17 @@ export function SoundList({
           <li key={key} className="sound-row-wrap">
             <button
               type="button"
-              className={playingKey === key ? 'sound-row playing' : 'sound-row'}
+              className={[
+                'sound-row',
+                playingKey === key && 'playing',
+                lastAutoKey === key && 'auto-marked',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-testid={`sound-${key}`}
               data-key={key}
               data-playing={playingKey === key ? 'true' : undefined}
+              data-auto={lastAutoKey === key ? 'true' : undefined}
               onClick={() => onSoundClick(key)}
             >
               <span className="sound-key">{key}</span>
@@ -55,6 +68,11 @@ export function SoundList({
                   }}
                 >
                   copied to clipboard
+                </span>
+              )}
+              {(counts[key] ?? 0) > 0 && (
+                <span data-testid="play-count" className="play-count">
+                  {formatPlays(counts[key] ?? 0)}
                 </span>
               )}
             </button>

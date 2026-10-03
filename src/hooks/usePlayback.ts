@@ -13,10 +13,17 @@ export interface PlaybackOptions {
   offline: boolean
   pitch: number
   volume: number
+  resolveMember: (key: string) => string
 }
 
 /** Single-playback controller: at most one sound plays at a time. */
-export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions) {
+export function usePlayback({
+  catalog,
+  offline,
+  pitch,
+  volume,
+  resolveMember,
+}: PlaybackOptions) {
   const [playingKey, setPlayingKeyState] = useState<string | null>(null)
   const playingRef = useRef<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -63,9 +70,23 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Escape cancels any playing sound immediately.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        stop()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  })
+
   function play(key: string, opts?: PlayOpts) {
     const p = opts?.pitch ?? pitch
     const v = opts?.volume ?? volume
+    const member = resolveMember(key)
     // Strictly one sound at a time: stop whatever is playing first.
     stopCurrent()
     if (offline) {
@@ -74,7 +95,7 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
       window.clearTimeout(mockTimerRef.current)
       mockTimerRef.current = window.setTimeout(() => {
         if (playingRef.current === key) setPlaying(null)
-      }, mockBlipDurationMs(key, p))
+      }, mockBlipDurationMs(member, p))
       const AC =
         window.AudioContext ??
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -89,13 +110,13 @@ export function usePlayback({ catalog, offline, pitch, volume }: PlaybackOptions
       const ctx = audioCtxRef.current
       if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
       try {
-        mockStopRef.current = playMockBlip(ctx, key, p, v)
+        mockStopRef.current = playMockBlip(ctx, member, p, v)
       } catch {
         mockStopRef.current = null
       }
       return
     }
-    const variants = catalog?.[key]
+    const variants = catalog?.[member]
     if (!variants || variants.length === 0) {
       setPlaying(null)
       return

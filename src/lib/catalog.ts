@@ -97,3 +97,28 @@ export function shortId(key: string): string {
   const parts = key.split('.')
   return parts[parts.length - 1] ?? key
 }
+
+/** Compact base: strip a numeric sibling suffix (break4 -> break). */
+export function baseKey(key: string): string {
+  return key.replace(/([A-Za-z_])[0-9]+$/, '$1')
+}
+
+/** Group raw keys by compact base; bare keys join digit siblings. */
+export function compactKeys(keys: string[]): Map<string, string[]> {
+  const groups = new Map<string, string[]>()
+  for (const key of keys) {
+    const base = baseKey(key)
+    const group = groups.get(base)
+    if (group) {
+      group.push(key)
+    } else {
+      groups.set(base, [key])
+    }
+  }
+  return groups
+}
+
+/** Random member of a compact group (the internal pick). */
+export function pickMember(members: string[]): string {
+  return members[Math.floor(Math.random() * members.length)]
+}
