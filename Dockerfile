@@ -3,8 +3,8 @@ FROM node:26-alpine AS build
 # Git bakes the release version from tags (.git rides along in the context).
 RUN apk add --no-cache git
 WORKDIR /app
-COPY package.json ./
-RUN npm install --no-audit --no-fund
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 COPY . .
 # Best effort: bake the real catalog into the image. If the Mojang
 # endpoints are unreachable, the app falls back to offline mock data.

@@ -35,7 +35,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Build sound catalog (best effort)
         run: npm run build:catalog || echo "catalog fetch failed; app falls back to offline mocks"
