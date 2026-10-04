@@ -87,9 +87,9 @@ for unit/hook tests; no router, no state lib.
   sound (sample base pitch auto-detected as the key anchor, middle C
   fallback; velocity dynamics, sustain pedal honored, freely
   overlapping notes with 100ms release fades); sliders retune live
-  notes; stops only on toggle/Escape/swipe — another pick or surprise
-  switches the sound for the rest instead; disabled with empty history
-  or offline.
+  notes; stops only on toggle/Escape/swipe, while another pick or
+  surprise switches the sound for the rest instead; disabled with
+  empty history or offline.
 - Trend charts: hourly (8h), daily (7d), monthly (12m) polled series.
 
 ## Verification

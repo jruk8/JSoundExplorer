@@ -10,10 +10,13 @@ import {
 
 describe('normalizeHourly', () => {
   it('anchors on the latest server bucket and zero-fills', () => {
-    const points = normalizeHourly([
-      { hour: '2026-10-03T18:00:00Z', plays: 12 },
-      { hour: '2026-10-03T20:00:00Z', plays: 5 },
-    ])
+    const points = normalizeHourly(
+      [
+        { hour: '2026-10-03T18:00:00Z', plays: 12 },
+        { hour: '2026-10-03T20:00:00Z', plays: 5 },
+      ],
+      Date.parse('2026-10-03T20:37:00Z'),
+    )
     expect(points).toHaveLength(8)
     expect(points[7].date.toISOString()).toBe('2026-10-03T20:00:00.000Z')
     expect(points[7].plays).toBe(5)
@@ -38,14 +41,38 @@ describe('normalizeHourly', () => {
     )
     expect(points.every((p) => p.plays === 0)).toBe(true)
   })
+
+  it('keeps the server bucket when the server clock runs ahead', () => {
+    const points = normalizeHourly(
+      [{ hour: '2026-10-03T22:00:00Z', plays: 9 }],
+      Date.parse('2026-10-03T20:37:00Z'),
+    )
+    expect(points[7].date.toISOString()).toBe('2026-10-03T22:00:00.000Z')
+    expect(points[7].plays).toBe(9)
+  })
+
+  it('advances to the current hour when the latest bucket is stale', () => {
+    const points = normalizeHourly(
+      [{ hour: '2026-10-03T18:00:00Z', plays: 12 }],
+      Date.parse('2026-10-03T20:37:00Z'),
+    )
+    expect(points).toHaveLength(8)
+    expect(points[7].date.toISOString()).toBe('2026-10-03T20:00:00.000Z')
+    expect(points[7].plays).toBe(0)
+    expect(points[5].date.toISOString()).toBe('2026-10-03T18:00:00.000Z')
+    expect(points[5].plays).toBe(12)
+  })
 })
 
 describe('normalizeDaily', () => {
   it('anchors on the latest server bucket and zero-fills', () => {
-    const points = normalizeDaily([
-      { day: '2026-10-01T00:00:00Z', plays: 3 },
-      { day: '2026-10-03T00:00:00Z', plays: 7 },
-    ])
+    const points = normalizeDaily(
+      [
+        { day: '2026-10-01T00:00:00Z', plays: 3 },
+        { day: '2026-10-03T00:00:00Z', plays: 7 },
+      ],
+      Date.parse('2026-10-03T20:37:00Z'),
+    )
     expect(points).toHaveLength(7)
     expect(points[6].date.toISOString()).toBe('2026-10-03T00:00:00.000Z')
     expect(points[6].plays).toBe(7)
@@ -70,14 +97,29 @@ describe('normalizeDaily', () => {
     )
     expect(points.every((p) => p.plays === 0)).toBe(true)
   })
+
+  it('advances to the current day when the latest bucket is stale', () => {
+    const points = normalizeDaily(
+      [{ day: '2026-10-01T00:00:00Z', plays: 3 }],
+      Date.parse('2026-10-03T20:37:00Z'),
+    )
+    expect(points).toHaveLength(7)
+    expect(points[6].date.toISOString()).toBe('2026-10-03T00:00:00.000Z')
+    expect(points[6].plays).toBe(0)
+    expect(points[4].date.toISOString()).toBe('2026-10-01T00:00:00.000Z')
+    expect(points[4].plays).toBe(3)
+  })
 })
 
 describe('normalizeMonthly', () => {
   it('anchors on the latest server bucket and zero-fills', () => {
-    const points = normalizeMonthly([
-      { month: '2026-01-01T00:00:00Z', plays: 4 },
-      { month: '2026-03-01T00:00:00Z', plays: 9 },
-    ])
+    const points = normalizeMonthly(
+      [
+        { month: '2026-01-01T00:00:00Z', plays: 4 },
+        { month: '2026-03-01T00:00:00Z', plays: 9 },
+      ],
+      Date.parse('2026-03-15T12:00:00Z'),
+    )
     expect(points).toHaveLength(12)
     expect(points[11].date.toISOString()).toBe('2026-03-01T00:00:00.000Z')
     expect(points[11].plays).toBe(9)
@@ -101,6 +143,18 @@ describe('normalizeMonthly', () => {
       Date.parse('2026-10-03T20:00:00Z'),
     )
     expect(points.every((p) => p.plays === 0)).toBe(true)
+  })
+
+  it('advances to the current month when the latest bucket is stale', () => {
+    const points = normalizeMonthly(
+      [{ month: '2026-01-01T00:00:00Z', plays: 4 }],
+      Date.parse('2026-03-15T12:00:00Z'),
+    )
+    expect(points).toHaveLength(12)
+    expect(points[11].date.toISOString()).toBe('2026-03-01T00:00:00.000Z')
+    expect(points[11].plays).toBe(0)
+    expect(points[9].date.toISOString()).toBe('2026-01-01T00:00:00.000Z')
+    expect(points[9].plays).toBe(4)
   })
 })
 

@@ -205,8 +205,8 @@ export function useClassical({
 
   /**
    * Base-pitch note of a sample, detected from proxied bytes (the CDN
-   * sends no CORS headers). Null on any failure — no API, no WebAudio,
-   * unpitched sample — so callers keep their current anchor.
+   * sends no CORS headers). Null on any failure (no API, no WebAudio,
+   * unpitched sample), so callers keep their current anchor.
    */
   async function detectAnchor(hash: string): Promise<number | null> {
     try {

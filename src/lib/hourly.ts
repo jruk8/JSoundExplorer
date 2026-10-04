@@ -60,23 +60,30 @@ function indexBuckets(
   return byTime
 }
 
-/** Latest bucket, or the fallback anchor when there is no data yet. */
-function latestOrNow(times: number[], fallback: number): number {
-  const sorted = [...times].sort((a, b) => a - b)
-  return sorted.length > 0 ? sorted[sorted.length - 1] : fallback
+/**
+ * Anchor on the current period, or the latest bucket when the server runs
+ * ahead of this clock (clock-skew safe). Empty trailing periods stay
+ * visible instead of freezing the chart on the last period with plays.
+ */
+function anchorOnNowOrLatest(times: number[], nowFloor: number): number {
+  let anchor = nowFloor
+  for (const t of times) {
+    if (t > anchor) anchor = t
+  }
+  return anchor
 }
 
 /**
  * Normalize sparse server buckets into exactly 8 contiguous hourly points,
- * zero-filled. Anchors on the latest server bucket (clock-skew safe);
- * with no data yet, anchors on the current UTC hour.
+ * zero-filled. Anchors on the current UTC hour (or the latest server
+ * bucket when it runs ahead); with no data yet, anchors on now.
  */
 export function normalizeHourly(hours: HourBucket[], nowMs: number = Date.now()): HourPoint[] {
   const byHour = indexBuckets(
     hours.map((h) => ({ at: h.hour, plays: h.plays })),
     (t) => Math.floor(t / HOUR_MS) * HOUR_MS,
   )
-  const anchor = latestOrNow([...byHour.keys()], Math.floor(nowMs / HOUR_MS) * HOUR_MS)
+  const anchor = anchorOnNowOrLatest([...byHour.keys()], Math.floor(nowMs / HOUR_MS) * HOUR_MS)
   return Array.from({ length: HOURLY_WINDOW }, (_, i) => {
     const t = anchor - (HOURLY_WINDOW - 1 - i) * HOUR_MS
     return { date: new Date(t), plays: byHour.get(t) ?? 0 }
@@ -85,15 +92,15 @@ export function normalizeHourly(hours: HourBucket[], nowMs: number = Date.now())
 
 /**
  * Normalize sparse server buckets into exactly 7 contiguous daily points,
- * zero-filled. Anchors on the latest server bucket (clock-skew safe);
- * with no data yet, anchors on the current UTC day.
+ * zero-filled. Anchors on the current UTC day (or the latest server
+ * bucket when it runs ahead); with no data yet, anchors on now.
  */
 export function normalizeDaily(days: DayBucket[], nowMs: number = Date.now()): DayPoint[] {
   const byDay = indexBuckets(
     days.map((d) => ({ at: d.day, plays: d.plays })),
     (t) => Math.floor(t / DAY_MS) * DAY_MS,
   )
-  const anchor = latestOrNow([...byDay.keys()], Math.floor(nowMs / DAY_MS) * DAY_MS)
+  const anchor = anchorOnNowOrLatest([...byDay.keys()], Math.floor(nowMs / DAY_MS) * DAY_MS)
   return Array.from({ length: DAILY_WINDOW }, (_, i) => {
     const t = anchor - (DAILY_WINDOW - 1 - i) * DAY_MS
     return { date: new Date(t), plays: byDay.get(t) ?? 0 }
@@ -107,8 +114,8 @@ function floorMonthUtc(t: number): number {
 
 /**
  * Normalize sparse server buckets into exactly 12 contiguous monthly
- * points, zero-filled. Anchors on the latest server bucket (clock-skew
- * safe); with no data yet, anchors on the current UTC month.
+ * points, zero-filled. Anchors on the current UTC month (or the latest
+ * server bucket when it runs ahead); with no data yet, anchors on now.
  */
 export function normalizeMonthly(
   months: MonthBucket[],
@@ -118,7 +125,7 @@ export function normalizeMonthly(
     months.map((m) => ({ at: m.month, plays: m.plays })),
     floorMonthUtc,
   )
-  const anchor = latestOrNow([...byMonth.keys()], floorMonthUtc(nowMs))
+  const anchor = anchorOnNowOrLatest([...byMonth.keys()], floorMonthUtc(nowMs))
   return Array.from({ length: MONTHLY_WINDOW }, (_, i) => {
     const d = new Date(anchor)
     const t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - (MONTHLY_WINDOW - 1 - i), 1)
