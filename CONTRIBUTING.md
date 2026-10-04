@@ -58,8 +58,6 @@
   extensions (`from '../lib/catalog.ts'`).
 - Conventional Commits (`feat:`, `fix:`, `docs:`, …) » the changelog and
   release notes are generated from them, so keep the type prefix accurate.
-- Clean-room only: never copy code, assets, or text from the earlier
-  SoundExplorer codebase; reimplement from behavior descriptions.
 
 ## Releasing (tag-driven, Axion-style)
 

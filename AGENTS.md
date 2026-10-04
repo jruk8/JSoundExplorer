@@ -1,8 +1,6 @@
 # AGENTS.md » JSoundExplorer
 
-Clean-room rebuild of a Minecraft sound explorer. **Do not copy code, assets,
-or text from the old SoundExplorer repo** (forked from an all-rights-reserved
-source); reimplement from behavior descriptions only.
+A Minecraft sound explorer.
 
 ## Stack
 
