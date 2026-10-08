@@ -34,7 +34,8 @@ for unit/hook tests; no router, no state lib.
   `OptionsPanel`, `CommandSelect`, `HistoryList`, `SwipeGame`, `SwipeCard`,
   `Vault`, `TrendChart` (hourly/daily/monthly), `icons`. `App.tsx` only
   composes hooks + components.
-- `scripts/build-catalog.mjs` » Mojang version manifest → asset index → sounds.json.
+- `scripts/build-catalog.mjs` » Mojang version manifest → asset index +
+  streamed sound definitions → event-keyed sounds.json.
 - `server/` » counts API + sample byte-proxy (node:http + mysql2) + its Dockerfile; `db`
   (MariaDB) alongside in compose; `docker-compose.tls.yml` adds a Caddy
   HTTPS front door for Pages mode.
@@ -73,13 +74,14 @@ for unit/hook tests; no router, no state lib.
   dismisses (lone pick spotlights); rounds reshuffle, and the last
   auto-played row stays marked; card pitch randomizes only when
   Also-pitch is on.
-- Numeric siblings compact to one row (break1..4 » break); interactions
-  resolve a random real member internally.
+- Rows are Mojang /playsound event ids verbatim (no clipping: `riptide_1`
+  and `riptide_2` are distinct events); each play picks a random resolved
+  file, and copies/snippets/history all use the event id.
 - Escape stops any playing sound.
 - Auto-mark is a focus-style outline box; playing another row clears it.
 - Right-swipe replays at 1.15x gain (mock path unclamped; remote caps at
   the element ceiling).
-- Play counts: anonymous per-base totals in MariaDB; rows show compact
+- Play counts: anonymous per-event totals in MariaDB; rows show compact
   counts (1.0K), hidden at zero; 5s batched upload, 10s refresh.
 - Play Classical!: a random bundled MIDI piece on the latest history
   sound (sample base pitch auto-detected as the key anchor, middle C

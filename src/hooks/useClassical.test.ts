@@ -63,7 +63,6 @@ describe('useClassical', () => {
             'a.b': [{ hash: 'aa01', size: 1 }],
             'c.d': [{ hash: 'cc02', size: 1 }],
           },
-          resolveMember: (k) => k,
           stopPlayback,
         }),
       { initialProps: { pitch: 1, volume: 100, soundKey } },

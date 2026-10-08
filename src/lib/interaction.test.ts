@@ -77,7 +77,9 @@ describe('vaultShouldOpen', () => {
 
 describe('pickVaultSound', () => {
   it('prefers the named fanfare sounds', () => {
-    expect(pickVaultSound(['ui.click', 'random.pop', 'block.x'], () => 0)).toBe('random.pop')
+    expect(pickVaultSound(['ui.click', 'entity.item.pickup', 'block.x'], () => 0)).toBe(
+      'entity.item.pickup',
+    )
   })
 
   it('falls back to any catalog key', () => {
@@ -97,18 +99,16 @@ describe('pickVaultSound', () => {
 
 describe('pickUiSound', () => {
   it('prefers the exact key when cataloged', () => {
-    expect(pickUiSound(['ui.click', 'item.spyglass.stop'], 'item.spyglass.stop', () => 0.99)).toBe(
-      'item.spyglass.stop',
-    )
+    const pool = ['ui.click', 'item.spyglass.stop_using']
+    expect(pickUiSound(pool, 'item.spyglass.stop_using', () => 0.99)).toBe('item.spyglass.stop_using')
   })
 
   it('falls back to the vault pool', () => {
-    expect(pickUiSound(['ui.click', 'random.bow'], 'item.spyglass.stop', () => 0)).toBe(
-      'random.bow',
-    )
+    const pool = ['ui.click', 'entity.item.pickup']
+    expect(pickUiSound(pool, 'item.spyglass.stop_using', () => 0)).toBe('entity.item.pickup')
   })
 
   it('returns null for an empty pool', () => {
-    expect(pickUiSound([], 'item.spyglass.stop')).toBeNull()
+    expect(pickUiSound([], 'item.spyglass.stop_using')).toBeNull()
   })
 })

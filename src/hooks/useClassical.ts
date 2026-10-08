@@ -13,7 +13,6 @@ export interface ClassicalOptions {
   pitch: number
   volume: number
   catalog: SoundCatalog | null
-  resolveMember: (key: string) => string
   stopPlayback: () => void
 }
 
@@ -46,13 +45,12 @@ export function useClassical({
   pitch,
   volume,
   catalog,
-  resolveMember,
   stopPlayback,
 }: ClassicalOptions) {
   const [playing, setPlayingState] = useState(false)
   const playingRef = useRef(false)
-  const latestRef = useRef({ soundKey, pitch, volume, catalog, resolveMember, stopPlayback })
-  latestRef.current = { soundKey, pitch, volume, catalog, resolveMember, stopPlayback }
+  const latestRef = useRef({ soundKey, pitch, volume, catalog, stopPlayback })
+  latestRef.current = { soundKey, pitch, volume, catalog, stopPlayback }
   const runRef = useRef(0)
   const switchRef = useRef(0)
   const timerRef = useRef<number | undefined>(undefined)
@@ -241,7 +239,7 @@ export function useClassical({
   function start() {
     const { soundKey: key, catalog: cat } = latestRef.current
     if (playingRef.current || !key || !cat) return
-    const variants = cat[latestRef.current.resolveMember(key)]
+    const variants = cat[key]
     if (!variants || variants.length === 0) return
     const variant = pickVariant(variants)
     const run = ++runRef.current
@@ -284,7 +282,7 @@ export function useClassical({
     if (!playingRef.current || !soundKey) return
     const run = runRef.current
     const swing = ++switchRef.current
-    const variants = latestRef.current.catalog?.[latestRef.current.resolveMember(soundKey)]
+    const variants = latestRef.current.catalog?.[soundKey]
     if (!variants || variants.length === 0) return
     const hash = pickVariant(variants).hash
     urlRef.current = buildResourceUrl(hash)

@@ -82,13 +82,13 @@ export function darkenColor(color: string, factor: number): string {
   return `#${mix(r)}${mix(g)}${mix(b)}`
 }
 
-// Vault intro tuning.
+// Vault intro tuning. Preferred fanfare stings are /playsound event ids.
 export const VAULT_SOUNDS = [
-  'random.pop',
-  'random.glass',
-  'random.click',
-  'random.door_open',
-  'random.bow',
+  'entity.item.pickup',
+  'entity.experience_orb.pickup',
+  'block.lever.click',
+  'block.glass.break',
+  'entity.player.levelup',
 ]
 export const VAULT_PITCHES = [0.9, 1, 1.1]
 export const VAULT_OPEN_PX = 240
@@ -157,7 +157,7 @@ export const SWIPE_OVERLAY_MS = 450
 export const SWIPE_REVEAL_MS = 450
 export const SWIPE_COMMIT_PX = 100
 /** Discard sting, played strictly (no fallback when uncataloged). */
-export const SWIPE_DISCARD_SOUND = 'step.snow'
+export const SWIPE_DISCARD_SOUND = 'block.snow.step'
 /** Non-card swipe sounds play at half the configured volume. */
 export const SWIPE_UI_VOLUME_FACTOR = 0.5
 

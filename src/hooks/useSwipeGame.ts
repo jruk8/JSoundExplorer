@@ -105,7 +105,7 @@ export function useSwipeGame({
   function closeGame(winner: SwipeCardData | null) {
     setClosing(true)
     if (winner !== null) {
-      const fanfare = pickUiSound(soundPool, 'block.copper_chest.copper_chest_open')
+      const fanfare = pickUiSound(soundPool, 'block.copper_chest.open')
       if (fanfare !== null) {
         play(fanfare, {
           pitch: 1.1,
@@ -170,7 +170,7 @@ export function useSwipeGame({
       recordPlay(card.key)
       return
     }
-    // Strictly step.snow: no fallback sting when it is uncataloged.
+    // Strictly block.snow.step: no fallback sting when it is uncataloged.
     if (soundPool.includes(SWIPE_DISCARD_SOUND)) {
       play(SWIPE_DISCARD_SOUND, {
         pitch: pickVaultPitch(),

@@ -23,7 +23,6 @@ describe('usePlayback', () => {
         offline: false,
         pitch: 1,
         volume: 100,
-        resolveMember: (k) => k,
         onPlay,
       }),
     )

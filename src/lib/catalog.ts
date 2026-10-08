@@ -94,7 +94,7 @@ export function mockWaveformForKey(key: string): MockWaveform {
 
 /**
  * Swipe card title: keep the last two dot segments, split on dots and
- * underscores, and capitalize each word ("mob.wither_skeleton.hurt" ->
+ * underscores, and capitalize each word ("entity.wither_skeleton.hurt" ->
  * "Wither Skeleton Hurt"). Short keys degrade gracefully ("ui.click" ->
  * "Ui Click", "click" -> "Click").
  */
@@ -111,8 +111,9 @@ export function cardTitle(key: string): string {
 
 /**
  * Search match: every query word must appear in the raw key or its fancy
- * card title, in any order, so "villager mob" still finds mob.villager.death
- * and both "lava_chicken" and "Lava Chicken" find mob.lava_chicken.hurt.
+ * card title, in any order, so "villager entity" still finds
+ * entity.villager.death and both "wither_skeleton" and "Wither Skeleton"
+ * find entity.wither_skeleton.hurt.
  */
 export function keyMatchesQuery(key: string, query: string): boolean {
   const trimmed = query.trim().toLowerCase()
@@ -122,32 +123,4 @@ export function keyMatchesQuery(key: string, query: string): boolean {
   return trimmed
     .split(/\s+/)
     .every((word) => hayKey.includes(word) || hayTitle.includes(word))
-}
-
-/** Compact base: strip a numeric sibling suffix (break4 -> break, hurt_2 -> hurt). */
-export function baseKey(key: string): string {
-  const stripped = key.replace(/([A-Za-z_])[0-9]+$/, '$1')
-  // An underscore separator left dangling by the strip goes too.
-  if (stripped !== key && stripped.endsWith('_')) return stripped.slice(0, -1)
-  return stripped
-}
-
-/** Group raw keys by compact base; bare keys join digit siblings. */
-export function compactKeys(keys: string[]): Map<string, string[]> {
-  const groups = new Map<string, string[]>()
-  for (const key of keys) {
-    const base = baseKey(key)
-    const group = groups.get(base)
-    if (group) {
-      group.push(key)
-    } else {
-      groups.set(base, [key])
-    }
-  }
-  return groups
-}
-
-/** Random member of a compact group (the internal pick). */
-export function pickMember(members: string[]): string {
-  return members[Math.floor(Math.random() * members.length)]
 }

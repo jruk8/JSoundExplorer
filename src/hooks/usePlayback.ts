@@ -28,7 +28,6 @@ export interface PlaybackOptions {
   offline: boolean
   pitch: number
   volume: number
-  resolveMember: (key: string) => string
   onPlay: (entry: PlayHistoryEntry) => void
 }
 
@@ -38,7 +37,6 @@ export function usePlayback({
   offline,
   pitch,
   volume,
-  resolveMember,
   onPlay,
 }: PlaybackOptions) {
   const [playingKey, setPlayingKeyState] = useState<string | null>(null)
@@ -224,7 +222,6 @@ export function usePlayback({
     const outgoingFade = fadeMarkRef.current && outgoing !== null
     internalRef.current = opts?.internal === true
     fadeMarkRef.current = opts?.fade === true
-    const member = resolveMember(key)
     if (outgoingFade && outgoing) {
       // Unpredictable interruption of a UI sting: detach it and crossfade
       // under the new sound instead of cutting (card sounds cut as before).
@@ -255,7 +252,7 @@ export function usePlayback({
       window.clearTimeout(mockTimerRef.current)
       mockTimerRef.current = window.setTimeout(() => {
         if (playingRef.current === key) setPlaying(null)
-      }, mockBlipDurationMs(member, p))
+      }, mockBlipDurationMs(key, p))
       const AC =
         window.AudioContext ??
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -270,13 +267,13 @@ export function usePlayback({
       const ctx = audioCtxRef.current
       if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
       try {
-        mockStopRef.current = playMockBlip(ctx, member, p, v)
+        mockStopRef.current = playMockBlip(ctx, key, p, v)
       } catch {
         mockStopRef.current = null
       }
       return
     }
-    const variants = catalog?.[member]
+    const variants = catalog?.[key]
     if (!variants || variants.length === 0) {
       setPlaying(null)
       return

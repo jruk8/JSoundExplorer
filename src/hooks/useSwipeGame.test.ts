@@ -31,13 +31,13 @@ describe('useSwipeGame sounds', () => {
   const KEYS = ['a.b', 'c.d', 'e.f', 'g.h', 'i.j', 'k.l']
   const POOL = [
     ...KEYS,
-    'random.pop',
-    'random.glass',
-    'random.click',
-    'random.door_open',
-    'random.bow',
-    'step.snow',
-    'block.copper_chest.copper_chest_open',
+    'entity.item.pickup',
+    'entity.experience_orb.pickup',
+    'block.lever.click',
+    'block.glass.break',
+    'entity.player.levelup',
+    'block.snow.step',
+    'block.copper_chest.open',
   ]
 
   function setup(overrides: Partial<SwipeGameOptions> = {}) {
@@ -77,9 +77,13 @@ describe('useSwipeGame sounds', () => {
     })
     expect(play).toHaveBeenCalledTimes(1)
     const [key, opts] = play.mock.calls[0]
-    expect(['random.pop', 'random.glass', 'random.click', 'random.door_open', 'random.bow']).toContain(
-      key,
-    )
+    expect([
+      'entity.item.pickup',
+      'entity.experience_orb.pickup',
+      'block.lever.click',
+      'block.glass.break',
+      'entity.player.levelup',
+    ]).toContain(key)
     expect(opts).toMatchObject({ volume: 40, internal: true, fade: true })
     expect([0.9, 1, 1.1]).toContain(opts?.pitch)
   })
@@ -98,7 +102,7 @@ describe('useSwipeGame sounds', () => {
     expect(play).toHaveBeenCalledTimes(2)
   })
 
-  it('plays step.snow strictly on left commit', () => {
+  it('plays block.snow.step strictly on left commit', () => {
     const { result, play, recordPlay } = setup()
     act(() => {
       result.current.open()
@@ -106,7 +110,7 @@ describe('useSwipeGame sounds', () => {
     act(() => {
       result.current.commitThrow('left')
     })
-    const snow = play.mock.calls.find(([k]) => k === 'step.snow')
+    const snow = play.mock.calls.find(([k]) => k === 'block.snow.step')
     expect(snow?.[1]).toMatchObject({ volume: 40, internal: true, fade: true })
     expect([0.9, 1, 1.1]).toContain(snow?.[1]?.pitch)
     expect(recordPlay).not.toHaveBeenCalled()
@@ -127,8 +131,8 @@ describe('useSwipeGame sounds', () => {
     expect(recordPlay).toHaveBeenCalledWith(key)
   })
 
-  it('stays silent on discard when step.snow is not cataloged', () => {
-    const { result, play } = setup({ soundPool: ['a.b', 'random.pop'] })
+  it('stays silent on discard when block.snow.step is not cataloged', () => {
+    const { result, play } = setup({ soundPool: ['a.b', 'entity.item.pickup'] })
     act(() => {
       result.current.open()
     })
@@ -137,7 +141,7 @@ describe('useSwipeGame sounds', () => {
     })
     // Open sting only; the missing discard stings nothing.
     expect(play).toHaveBeenCalledTimes(1)
-    expect(play.mock.calls.find(([k]) => k === 'step.snow')).toBeUndefined()
+    expect(play.mock.calls.find(([k]) => k === 'block.snow.step')).toBeUndefined()
   })
 
   it('fans out the winner sound at half volume on close with a winner', () => {
@@ -150,7 +154,7 @@ describe('useSwipeGame sounds', () => {
         result.current.exitThrow(i === 0 ? 'right' : 'left')
       })
     }
-    const chest = play.mock.calls.find(([k]) => k === 'block.copper_chest.copper_chest_open')
+    const chest = play.mock.calls.find(([k]) => k === 'block.copper_chest.open')
     expect(chest?.[1]).toMatchObject({ pitch: 1.1, volume: 40, internal: true, fade: true })
     act(() => {
       vi.advanceTimersByTime(450)

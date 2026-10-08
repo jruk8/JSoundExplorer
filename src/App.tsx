@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { compactKeys, keyMatchesQuery, namespaceOf, pickMember } from './lib/catalog.ts'
+import { keyMatchesQuery, namespaceOf } from './lib/catalog.ts'
 import { SWIPE_REVEAL_MS } from './lib/interaction.ts'
 import { en, formatString } from './locales/en.ts'
 import type { SortMode } from './lib/playcounts.ts'
@@ -36,22 +36,12 @@ export default function App() {
   }, [sortMode])
   const [vault, setVault] = useState(true)
   const [lastAutoKey, setLastAutoKey] = useState<string | null>(null)
-  const memberGroups = useMemo(
-    () => (catalog ? compactKeys(Object.keys(catalog)) : new Map<string, string[]>()),
-    [catalog],
-  )
-  // Resolve a compact row to one real member (fresh random pick per play).
-  // Copies always take the displayed base key, never a numbered sibling.
-  function resolveMember(base: string): string {
-    return pickMember(memberGroups.get(base) ?? [base])
-  }
   const history = useHistory()
   const playback = usePlayback({
     catalog,
     offline,
     pitch,
     volume,
-    resolveMember,
     onPlay: history.record,
   })
   const copyLabel = useCopyLabel(playback.isPlaying)
@@ -71,7 +61,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playback.playingKey])
 
-  const allKeys = useMemo(() => [...memberGroups.keys()].sort(), [memberGroups])
+  const allKeys = useMemo(() => (catalog ? Object.keys(catalog).sort() : []), [catalog])
   const keys = useMemo(() => {
     const filtered = allKeys.filter(
       (k) => keyMatchesQuery(k, search) && ns.isEnabled(namespaceOf(k)),
@@ -97,7 +87,6 @@ export default function App() {
     pitch,
     volume,
     catalog,
-    resolveMember,
     stopPlayback: playback.stop,
   })
 
