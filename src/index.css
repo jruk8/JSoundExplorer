@@ -248,6 +248,10 @@ body {
 }
 
 .controls {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
   display: grid;
   grid-template-columns: max-content max-content;
   justify-content: start;
